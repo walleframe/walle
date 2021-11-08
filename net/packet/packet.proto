@@ -1,0 +1,85 @@
+syntax = "proto3";
+package packet;
+
+option go_package = "github.com/aggronmagi/walle/net/packet";
+
+
+// Command control command 
+enum Command {
+    // unkown value 
+    InvalidCommand = 0;
+    // rpc call request
+    Request = 1;
+    // rpc call response
+    Response = 2;
+    // one way rpc 
+    Oneway = 3;
+}
+
+// Flag
+enum Flag {
+    // nothing
+    Nothing = 0;
+    // response is error 
+    Exception = 0x01;
+    // identifies whether client side call is async
+    ClientAsync = 0x02;
+}
+
+// Packet represent one network packet.
+message Packet {
+    // control command
+    int32 Cmd = 1;
+    // flag 
+    uint32 Flag = 2;
+    // sequence id 
+    uint64 Sequence = 3;
+    // metadata
+    map<string,string> Metadata = 4;
+    // method name 
+    string Uri = 5;
+    // reserved request id.
+    uint32 ReservedRq = 6;
+    // body
+    bytes Body = 7;
+    // reserved uint32
+    uint32 ReservedUint32 = 10;
+    // reserved uint64
+    uint64 ReservedUint64 = 11;
+    // reserved string
+    string ReservedString = 12;
+    // reserved bytes
+    bytes ReservedBytes = 13;
+}
+
+// ErrorCode internal error code
+enum ErrorCode {
+    // not error 
+    NoError = 0;
+    // unkown error.
+    UnkownErr = 1;
+    // marshal msg falied
+    MarshalFailed = 2;
+    // unmarshal msg failed
+    UnmarshalFailed = 3;
+    // not support interface,not implemented
+    NotSupport = 4;
+    // timeout
+    Timeout = 5;
+    // packet size too large
+    PacketTooLarge = 6;
+    // coding wrong 
+    UnexpectedCode  = 7;
+    // session closed 
+    SessionClosed = 8;
+}
+
+// ErrorResponse represent rpc call common error
+message ErrorResponse {
+    // error code
+    int64 Code = 1;
+    // logic error
+    bool LogicError = 2;
+    // desc
+    string Desc = 3;
+}

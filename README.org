@@ -1,0 +1,114 @@
+#+startup: content
+#+title: walle
+
+walle目标是开箱即用. 灵活配置. 高性能的服务框架.开发中...
+
+* 进度
+** TODO 网络层支持以下接口
+ - [ ] gotcp
+ - [ ] gnet
+ - [ ] kcp
+ - [X] websocket
+** TODO 服务注册与发现使用
+ - [ ] etcd
+** TODO 工具代码包
+ - [ ] gpool
+ - [ ] skeleton
+** TODO 代码生成
+ - [ ] excel配置相关
+ - [ ] rpc、tcp代码
+ - [ ] redis/mysql 代码
+* 网络库
+** 层级
+ 1. 底层接口. io层，只提供系统层级交互. read/write
+ 2. 中层接口. process层，定制处理流程. 已完成
+ 3. 高层接口. 业务逻辑层.
+    手写代码,后续会分为2层. 
+    1. 生成代码层
+    2. 自定义逻辑层
+*** io(transport)
+io.Read io.Write 负责网络接口读写
+**** 支持
+ - 原生net/tcp
+ - kcp https://github.com/xtaci/kcp-go
+ - websocket https://github.com/gorilla/websocket/
+ - gnet https://github.com/panjf2000/gnet
+*** process -> 处理流程
+**** network.Read
+#+begin_example
+io.Read ==>  PacketDispatcherFilter(Chain) => PacketCoder.Decode(Tee) => PacketCodec.Unmarshal => Router => CallChain(Middleware+LogicFunc)
+#+end_example
+
+**** network.Write
+#+begin_example
+MsgCodec.Marshal => PacketCodec.Marshal => PacketCoder.Encode => NetPackager.Write ==> io.Write
+#+end_example
+
+*** logic -> 逻辑处理(自定义生成/手写代码)
+
+** 组件,接口
+*** NetPackager 接口
+用于处理网络沾包,拆包,发包等.处理最原始的网络包
+#+begin_src go
+type NetPackager interface {
+	// 重置链接/重连等情况,清理内存数据
+	Reset()
+	// 从socket中读取数据.处理包头,返回处理沾包之后的数据包
+	Read(r io.Reader) (pkgs net.Buffers, err error)
+	// 将数据写到socket. 处理数据包包头
+	Write(w io.Writer, data []byte) (n int, err error)
+}
+#+end_src
+当前实现是:
+ - Read返回的net.Buffers已经去除了包头
+ - Write将数据添加包头发送
+*** PacketDispatcherFilter 接口
+PacketDispatcherFilter 用于控制之后的程序如何执行.
+#+begin_src go
+// PacketDispatcherFunc 消息分发 - 未解包
+type PacketDispatcherFunc func(ctx Context, data []byte) (err error)
+// PacketUnmarshalFilter
+type PacketDispatcherFilter func(ctx Context, data []byte, next PacketDispatcherFunc) (err error)
+#+end_src
+*** PacketEncoder 接口
+用于对原始数据包进行处理(加解密,压缩等)
+#+begin_src go
+type PacketEncoder interface {
+	Encode(ctx Context, buf []byte) []byte
+	Decode(ctx Context, buf []byte) []byte
+}
+#+end_src
+*** PacketCodec 接口
+用于序列化/反序列化 packet.Packet 消息
+#+begin_src go
+type PacketCodec interface {
+	Marshal(p *packet.Packet) ([]byte, error)
+	Unmarshal(data []byte, p *packet.Packet) error
+}
+#+end_src
+*** MsgCodec 接口
+用于序列化和反序列逻辑层网络消息 - ~ctx.Bind(Request)~ => ~Codec.Unmarshal()~
+#+begin_src go
+type Codec interface {
+	Marshal(v interface{}) ([]byte, error)
+	Unmarshal(data []byte, v interface{}) error
+}
+#+end_src
+*** Router 接口
+路由组件
+*** CallChain 
+ 由中间件和逻辑处理函数组成的调用队列
+*** Context
+不同场景. Context不同.
+ - tcp-client / tcp-server-session
+ - rpc-client / rpc-server-session 
+ - kafka/redis-stream/redis-list/mq
+必须包含的项:
+  - log
+  - context.Context
+可选的项: 
+    - Packet
+    - Timer
+    - Server & Session
+    - Client
+
