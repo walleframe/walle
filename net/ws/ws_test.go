@@ -111,7 +111,7 @@ func TestWs(t *testing.T) {
 		),
 	)()
 
-	cli, err := NewClient(fmt.Sprintf("ws://localhost:%d/ws", port), nil, nil,
+	cli, err := NewClient(fmt.Sprintf("ws://localhost:%d/ws", port), nil,
 		process.WithMsgCodec(process.MessageCodecJSON),
 	)
 	if err != nil {

@@ -24,8 +24,7 @@ type rpcRS struct {
 func main() {
 	cli, err := NewClient(fmt.Sprintf("ws://localhost:8080/ws"), http.Header{
 		"name": []string{"xxx"},
-	}, nil,
-		process.WithMsgCodec(process.MessageCodecJSON),
+	}, process.WithMsgCodec(process.MessageCodecJSON),
 	)
 	if err != nil {
 		panic(err)

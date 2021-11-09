@@ -290,6 +290,7 @@ func TestProcess_Notify(t *testing.T) {
 
 	rq := &packet.Packet{
 		Cmd:      int32(packet.Command_Oneway),
+		Flag:     uint32(packet.Flag_ClientAsync),
 		Sequence: 1,
 		Metadata: map[string]string{"k": "v", "n": "10"},
 		Uri:      "kk",

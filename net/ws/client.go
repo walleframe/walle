@@ -8,14 +8,21 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func NewClient(addr string, head http.Header, inner *process.InnerOptions, opts ...process.ProcessOption) (_ Client, err error) {
+// NewClientEx 创建客户端。NOTE: websocket socket 客户端不支持自动重连
+// inner *process.InnerOptions 选项应该由上层ClientProxy去决定如何设置。
+// svr 内部应该设置链接相关的参数。比如读写超时，如何发送数据
+// opts 业务方决定
+func NewClientEx(addr string, head http.Header,
+	inner *process.InnerOptions,
+	svr *ServerOptions, // TODO 客户端独立选项配置
+	opts ...process.ProcessOption) (_ Client, err error) {
 	conn, _, err := websocket.DefaultDialer.Dial(addr, head)
 	if err != nil {
 		return
 	}
 	cli := &WsSession{
 		Process: process.NewProcess(
-			process.NewInnerOptions(),
+			inner,
 			process.NewProcessOptions(opts...),
 		),
 		conn: conn,
@@ -25,9 +32,14 @@ func NewClient(addr string, head http.Header, inner *process.InnerOptions, opts 
 		process.WithInnerOptionsBindData(cli),
 		process.WithInnerOptionsNewContext(cli.newContext),
 	)
-	cli.writeMethod = WriteAsync
+	cli.opts = svr // TODO 客户端独立配置转换
 	cli.ctx = context.Background()
 	cli.cancel = func() {}
 	go cli.Run()
 	return cli, nil
+}
+
+// NewClient 新建客户端
+func NewClient(addr string, head http.Header, opts ...process.ProcessOption) (_ Client, err error) {
+	return NewClientEx(addr, head, process.NewInnerOptions(), NewServerOptions(), opts...)
 }

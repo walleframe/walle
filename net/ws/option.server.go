@@ -48,7 +48,7 @@ type ServerOptions struct {
 	// MaxMessageLimit limit message size
 	MaxMessageLimit int
 	// Write network data method.
-	WriteMethods WriteMethond
+	WriteMethods WriteMethod
 	// SendQueueSize async send queue size
 	SendQueueSize int
 }
@@ -189,7 +189,7 @@ func WithMaxMessageLimit(v int) ServerOption {
 }
 
 // Write network data method.
-func WithWriteMethods(v WriteMethond) ServerOption {
+func WithWriteMethods(v WriteMethod) ServerOption {
 	return func(cc *ServerOptions) ServerOption {
 		previous := cc.WriteMethods
 		cc.WriteMethods = v

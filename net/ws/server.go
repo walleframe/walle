@@ -2,12 +2,12 @@ package ws
 
 import (
 	"context"
-	"io"
 	"net"
 	"net/http"
 	"sync"
 	"time"
 
+	"github.com/aggronmagi/walle/net/iface"
 	"github.com/aggronmagi/walle/net/packet"
 	"github.com/aggronmagi/walle/net/process"
 	"github.com/aggronmagi/walle/zaplog"
@@ -16,56 +16,21 @@ import (
 	"go.uber.org/zap"
 )
 
-type Router = process.Router
+// import type
+type (
+	Router         = process.Router
+	Server         = iface.Server
+	Session        = iface.Session
+	SessionContext = iface.SessionContext
+	Client         = iface.Client
+	ClientContext  = iface.ClientContext
+	WriteMethod    = iface.WriteMethod
+)
 
-type Link interface {
-	// network write or close
-	io.WriteCloser
-
-	// process wrap
-	NewPacket(cmd packet.Command, uri, rq interface{}, md []process.MetadataOption, errflag ...bool) (req *packet.Packet, err error)
-	NewResponse(in *packet.Packet, body interface{}, md []process.MetadataOption) (rsp *packet.Packet, err error)
-	WritePacket(ctx context.Context, req *packet.Packet) (err error)
-	MarshalPacket(req *packet.Packet) (data []byte, err error)
-
-	Call(ctx context.Context, uri interface{}, rq, rs interface{}, opts *process.CallOptions) (err error)
-	AsyncCall(ctx context.Context, uri interface{}, rq interface{}, af process.RouterFunc, opts *process.AsyncCallOptions) (err error)
-	Notify(ctx context.Context, uri interface{}, rq interface{}, opts *process.NoticeOptions) (err error)
-}
-
-type Server interface {
-	Broadcast(uri interface{}, msg interface{}, meta ...process.MetadataOption) error
-	BroadcastFilter(filter func(Session) bool, uri interface{}, msg interface{}, meta ...process.MetadataOption) error
-	ForEach(f func(Session))
-}
-
-type Session interface {
-	Link
-	// GetConn get raw conn(net.Conn,websocket.Conn...)
-	GetConn() interface{}
-	// GetServer get raw server(*WsServer,*TcpServer...)
-	GetServer() Server
-}
-
-type SessionContext interface {
-	Session
-	process.Context
-}
-
-type Client interface {
-	Link
-}
-
-type ClientContext interface {
-	process.Context
-	Link
-}
-
-type WriteMethond int8
-
+// import const value
 const (
-	WriteAsync WriteMethond = iota
-	WriteImmediately
+	WriteAsync       = iface.WriteAsync
+	WriteImmediately = iface.WriteImmediately
 )
 
 // ServerOption
@@ -103,7 +68,7 @@ func walleServer() interface{} {
 		// MaxMessageLimit limit message size
 		"MaxMessageLimit": int(0),
 		// Write network data method.
-		"WriteMethods": WriteMethond(WriteAsync),
+		"WriteMethods": WriteMethod(WriteAsync),
 		// SendQueueSize async send queue size
 		"SendQueueSize": int(1024),
 	}
@@ -180,7 +145,7 @@ func (s *WsServer) HttpServeWs(w http.ResponseWriter, r *http.Request) {
 			),
 		),
 	}
-	sess.writeMethod = s.opts.WriteMethods
+	sess.opts = s.opts
 	sess.Process.Inner.ApplyOption(
 		process.WithInnerOptionsNewContext(sess.newContext),
 		process.WithInnerOptionsOutput(sess),

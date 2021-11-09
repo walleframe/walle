@@ -2,7 +2,9 @@
 #+title: walle
 
 walle目标是开箱即用. 灵活配置. 高性能的服务框架.开发中...
-
+#+begin_quote
+开发阶段，API并不稳定
+#+end_quote
 * 进度
 ** TODO 网络层支持以下接口
  - [ ] gotcp
@@ -47,28 +49,13 @@ MsgCodec.Marshal => PacketCodec.Marshal => PacketCoder.Encode => NetPackager.Wri
 *** logic -> 逻辑处理(自定义生成/手写代码)
 
 ** 组件,接口
-*** NetPackager 接口
-用于处理网络沾包,拆包,发包等.处理最原始的网络包
-#+begin_src go
-type NetPackager interface {
-	// 重置链接/重连等情况,清理内存数据
-	Reset()
-	// 从socket中读取数据.处理包头,返回处理沾包之后的数据包
-	Read(r io.Reader) (pkgs net.Buffers, err error)
-	// 将数据写到socket. 处理数据包包头
-	Write(w io.Writer, data []byte) (n int, err error)
-}
-#+end_src
-当前实现是:
- - Read返回的net.Buffers已经去除了包头
- - Write将数据添加包头发送
 *** PacketDispatcherFilter 接口
-PacketDispatcherFilter 用于控制之后的程序如何执行.
+PacketDispatcherFilter 用于控制之后的程序如何执行.可以在接收数据的时间开始就直接开始一个新的协程！
 #+begin_src go
 // PacketDispatcherFunc 消息分发 - 未解包
-type PacketDispatcherFunc func(ctx Context, data []byte) (err error)
+type PacketDispatcherFunc func(data []byte) (err error)
 // PacketUnmarshalFilter
-type PacketDispatcherFilter func(ctx Context, data []byte, next PacketDispatcherFunc) (err error)
+type PacketDispatcherFilter func(data []byte, next PacketDispatcherFunc) (err error)
 #+end_src
 *** PacketEncoder 接口
 用于对原始数据包进行处理(加解密,压缩等)
@@ -95,9 +82,15 @@ type Codec interface {
 }
 #+end_src
 *** Router 接口
-路由组件
-*** CallChain 
- 由中间件和逻辑处理函数组成的调用队列
+路由组件。当前支持string类型的name路由，和基于数字的路由。
+*** CallChain
+由中间件和逻辑处理函数组成的调用队列
+
+可以定制的中间件及支持：
+ - 监控中间件
+ - 定制处理协程。可以讲后续流程放入指定协程处理。
+ - 可以调用 process.Context.WithTimeout 设置整体流程超时。
+
 *** Context
 不同场景. Context不同.
  - tcp-client / tcp-server-session
@@ -111,4 +104,105 @@ type Codec interface {
     - Timer
     - Server & Session
     - Client
+      
+** process 选项
+*** 定制选项，业务方决定如何配置
+#+begin_src go
+// ProcessOption process option
+//go:generate gogen option -n ProcessOption -o option.process.go
+func walleProcessOption() interface{} {
+	return map[string]interface{}{
+		// log interface。 日志接口，也可以通过 server层WithSessionLogger去定制
+		"Logger": (*zaplog.Logger)(zaplog.Default),
+		// packet pool
+		"PacketPool": packet.PacketPool(packet.DefaultPacketPool),
+		// packet encoder
+		"PacketEncode": PacketEncoder(&EmtpyPacketCoder{}),
+		// packet codec
+		"PacketCodec": PacketCodec(PacketCodecProtobuf),
+		// message codec
+		"MsgCodec": MessageCodec(MessageCodecProtobuf),
+		// dispatch packet data filter 接收数据后，定制处理协程
+		"DispatchDataFilter": PacketDispatcherFilter(DefaultPacketFilter),
+		// load limit. return true to ignore packet. 负载限制。
+		"LoadLimitFilter": func(ctx Context, count int64, req *packet.Packet) bool {
+			return false
+		},
+	}
+}
+
+#+end_src
+*** 内部选项。 用于封装server,client等操作。开发新的io支持。
+#+begin_src go
+
+// InnerOption use for process
+//go:generate gogen option -n InnerOption -f Inner -o option.inner.go
+func walleProcessInner() interface{} {
+	return map[string]interface{}{
+		// Output: write interface(net.Conn)
+		"Output": io.Writer(nil),
+		// Specify Real Context
+		"NewContext": func(ctx Context, ud interface{}) Context {
+			return ctx
+		},
+		// process context parent
+		"ParentCtx": context.Context(context.Background()),
+		// Sequence number 可以由创建方决定，是否每一个process独立计算Sequence
+		"Sequence": AtomicNumber(&atomic.Int64{}),
+		// load number interface。 同上。
+		"Load": AtomicNumber(&atomic.Int64{}),
+		// bind data 内部绑定数据
+		"BindData": interface{}(nil),
+		// process router. 路由。也是由创建方决定使用方式
+		"Router": Router(nil),
+	}
+}
+#+end_src
+
+
+** websocket 选项
+#+begin_src go
+// ServerOption
+//go:generate gogen option -n ServerOption -o option.server.go
+func walleServer() interface{} {
+	return map[string]interface{}{
+		// Addr Server Addr. websocket监听地址
+		"Addr": string(":8080"),
+		// WsPath websocket server path。 路由
+		"WsPath": string("/ws"),
+		// Upgrade websocket upgrade
+		"Upgrade": (*websocket.Upgrader)(DefaultUpgrade),
+		// UpgradeFail upgrade fail notify.
+		"UpgradeFail": func(w http.ResponseWriter, r *http.Request, reason error) {},
+		// accepted load limit.链接数量限制
+		"AcceptLoadLimit": func(sess Session, cnt int64) bool { return false },
+		// Process Options 传递给process的选项。
+		"ProcessOptions": []process.ProcessOption{},
+		// process router。路由
+		"Router": Router(nil),
+		// SessionRouter custom session router。定制路由
+		"SessionRouter": func(sess Session, global Router) (r Router) { return global },
+		// log interface 日志接口
+		"Logger": (*zaplog.Logger)(zaplog.Default),
+		// SessionLogger custom session logger。定制日志接口
+		"SessionLogger": func(sess Session, global *zaplog.Logger) (r *zaplog.Logger) { return global },
+		// NewSession custom session。新链接通知
+		"NewSession": func(in Session, r *http.Request) (Session, error) { return in, nil },
+		// StopImmediately when session finish,business finish immediately.
+		// 链接断开后，是否停止处理流程。 应该根据业务分析决定。
+		"StopImmediately": false,
+		// ReadTimeout read timetout
+		"ReadTimeout": time.Duration(0),
+		// WriteTimeout write timeout
+		"WriteTimeout": time.Duration(0),
+		// MaxMessageLimit limit message size
+		"MaxMessageLimit": int(0),
+		// Write network data method.
+		"WriteMethods": WriteMethod(WriteAsync),
+		// SendQueueSize async send queue size
+		"SendQueueSize": int(1024),
+	}
+}
+#+end_src
+
 

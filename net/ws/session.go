@@ -27,7 +27,8 @@ type WsSession struct {
 	send  chan []byte
 	mux   sync.Mutex
 	//
-	writeMethod WriteMethond
+	writeMethod WriteMethod
+	opts        *ServerOptions
 }
 
 func (sess *WsSession) Write(in []byte) (n int, err error) {
@@ -44,7 +45,7 @@ func (sess *WsSession) Write(in []byte) (n int, err error) {
 		return
 	}
 	// async write
-	if sess.writeMethod == WriteAsync {
+	if sess.opts.WriteMethods == WriteAsync {
 		sess.send <- in
 		n = len(in)
 		return
@@ -89,8 +90,8 @@ func (sess *WsSession) GetServer() Server {
 // Run run client
 func (sess *WsSession) Run() {
 	// async write
-	if sess.writeMethod == WriteAsync {
-		sess.send = make(chan []byte, 1000) // FIXME: opts.SendQueueSize
+	if sess.opts.WriteMethods == WriteAsync {
+		sess.send = make(chan []byte, sess.opts.SendQueueSize)
 		go sess.writeLoop()
 	}
 	sess.readLoop()
