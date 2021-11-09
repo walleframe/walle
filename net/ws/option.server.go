@@ -51,6 +51,8 @@ type ServerOptions struct {
 	WriteMethods WriteMethod
 	// SendQueueSize async send queue size
 	SendQueueSize int
+	// Heartbeat use websocket ping/pong.
+	Heartbeat time.Duration
 }
 
 // Addr Server Addr
@@ -206,6 +208,15 @@ func WithSendQueueSize(v int) ServerOption {
 	}
 }
 
+// Heartbeat use websocket ping/pong.
+func WithHeartbeat(v time.Duration) ServerOption {
+	return func(cc *ServerOptions) ServerOption {
+		previous := cc.Heartbeat
+		cc.Heartbeat = v
+		return WithHeartbeat(previous)
+	}
+}
+
 // SetOption modify options
 func (cc *ServerOptions) SetOption(opt ServerOption) {
 	_ = opt(cc)
@@ -274,6 +285,7 @@ func newDefaultServerOptions() *ServerOptions {
 		MaxMessageLimit: 0,
 		WriteMethods:    WriteAsync,
 		SendQueueSize:   1024,
+		Heartbeat:       0,
 	}
 	return cc
 }

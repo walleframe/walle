@@ -3,6 +3,7 @@ package ws
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/aggronmagi/walle/net/packet"
 	"github.com/aggronmagi/walle/net/process"
@@ -101,6 +102,13 @@ func (sess *WsSession) Run() {
 func (sess *WsSession) writeLoop() {
 	defer sess.Close()
 	log := sess.Process.Opts.Logger
+	tmpChan := make(chan time.Time)
+	defer close(tmpChan)
+	tickerChan := (<-chan time.Time)(tmpChan)
+	if sess.svr != nil && sess.opts.Heartbeat > 0 {
+		tickerChan = time.Tick(sess.opts.Heartbeat)
+	}
+
 	for {
 		select {
 		case <-sess.ctx.Done():
@@ -109,6 +117,9 @@ func (sess *WsSession) writeLoop() {
 			}
 			return
 		case data, ok := <-sess.send:
+			if sess.opts.WriteTimeout > 0 {
+				sess.conn.SetWriteDeadline(time.Now().Add(sess.opts.WriteTimeout))
+			}
 			if !ok {
 				sess.conn.WriteMessage(websocket.CloseMessage,
 					websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""),
@@ -120,6 +131,13 @@ func (sess *WsSession) writeLoop() {
 				log.Error3("write message failed", zap.Error(err))
 				return
 			}
+		case <-tickerChan:
+			if sess.opts.WriteTimeout > 0 {
+				sess.conn.SetWriteDeadline(time.Now().Add(sess.opts.WriteTimeout))
+			}
+			if err := sess.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				return
+			}
 		}
 	}
 }
@@ -127,7 +145,25 @@ func (sess *WsSession) writeLoop() {
 func (sess *WsSession) readLoop() {
 	defer sess.Close()
 	log := sess.Process.Opts.Logger
+	if sess.svr != nil {
+		if sess.opts.Heartbeat > 0 {
+			// FIXME: time set 
+			sess.conn.SetReadDeadline(time.Now().Add(sess.opts.Heartbeat + time.Second))
+			sess.conn.SetPongHandler(func(string) error {
+				sess.conn.SetReadDeadline(time.Now().Add(sess.opts.Heartbeat + time.Second))
+				return nil
+			})
+		} else if sess.opts.ReadTimeout > 0 {
+			sess.conn.SetReadDeadline(time.Now().Add(sess.opts.ReadTimeout))
+		}
+	}
+
 	for {
+		if sess.svr != nil {
+			if sess.opts.Heartbeat == 0 && sess.opts.ReadTimeout > 0 {
+				sess.conn.SetReadDeadline(time.Now().Add(sess.opts.ReadTimeout))
+			}
+		}
 		_, data, err := sess.conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err,

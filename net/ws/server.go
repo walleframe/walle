@@ -71,6 +71,8 @@ func walleServer() interface{} {
 		"WriteMethods": WriteMethod(WriteAsync),
 		// SendQueueSize async send queue size
 		"SendQueueSize": int(1024),
+		// Heartbeat use websocket ping/pong.
+		"Heartbeat": time.Duration(0),
 	}
 }
 
