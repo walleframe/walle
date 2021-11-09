@@ -214,7 +214,7 @@ func (err *ErrorResponse) WrapError(in error) (out error) {
 	out = &ErrorResponse{
 		Code:       err.Code,
 		LogicError: err.LogicError,
-		Desc:       fmt.Sprintf("%s [%w]", err.Desc, in),
+		Desc:       fmt.Sprintf("%s [%v]", err.Desc, in),
 	}
 	return
 }
