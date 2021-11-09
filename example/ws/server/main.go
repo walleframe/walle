@@ -7,11 +7,10 @@ import (
 	"github.com/aggronmagi/walle/app"
 	"github.com/aggronmagi/walle/net/packet"
 	"github.com/aggronmagi/walle/net/process"
-	"github.com/aggronmagi/walle/net/ws"
 	"github.com/aggronmagi/walle/zaplog"
 	"go.uber.org/zap"
 
-	. "github.com/aggronmagi/walle/net/ws"
+	server "github.com/aggronmagi/walle/net/ws"
 )
 
 var (
@@ -26,41 +25,41 @@ func main() {
 	zaplog.Default = log
 
 	r := &process.MixRouter{}
-	r.Method("f1", rpcServerWrap(func(ctx SessionContext, rq *rpcRQ, rs *rpcRS) (err error) {
+	r.Method("f1", rpcServerWrap(func(ctx server.SessionContext, rq *rpcRQ, rs *rpcRS) (err error) {
 		rs.V1 = rq.M + rq.N
 		rs.V2 = rq.M - rq.N
 		ctx.Logger().Debug7("f1", zap.Any("rs", rs))
 		return
 	}))
-	r.Method("f2", rpcServerWrap(func(ctx SessionContext, rq *rpcRQ, rs *rpcRS) (err error) {
+	r.Method("f2", rpcServerWrap(func(ctx server.SessionContext, rq *rpcRQ, rs *rpcRS) (err error) {
 		rs.V1 = rq.M
 		rs.V2 = rq.N
 		ctx.Logger().Debug7("f2", zap.Any("rs", rs))
 		return
 	}))
-	r.Method("f3", rpcServerWrap(func(ctx SessionContext, rq *rpcRQ, rs *rpcRS) (err error) {
+	r.Method("f3", rpcServerWrap(func(ctx server.SessionContext, rq *rpcRQ, rs *rpcRS) (err error) {
 		err = packet.NewError(1000, "custom error")
 		ctx.Logger().Debug7("f3", zap.Any("rs", rs), zap.Error(err))
 		return
 	}))
 	runServer(
-		WithRouter(r),
-		WithProcessOptions(
+		server.WithRouter(r),
+		server.WithProcessOptions(
 			process.WithMsgCodec(process.MessageCodecJSON),
 		),
-		WithNewSession(func(in ws.Session, r *http.Request) (ws.Session, error) {
+		server.WithNewSession(func(in server.Session, r *http.Request) (server.Session, error) {
 			fmt.Println(r.Header)
 			return in, nil
 		}),
 	)
 }
 
-func runServer(opt ...ServerOption) {
+func runServer(opt ...server.ServerOption) {
 	opt = append(opt,
-		WithAddr(fmt.Sprintf("localhost:%d", port)),
-		WithWsPath("/ws"),
+		server.WithAddr(fmt.Sprintf("localhost:%d", port)),
+		server.WithWsPath("/ws"),
 	)
-	app.CreateApp(NewService("ws", opt...)).Run()
+	app.CreateApp(server.NewService("ws", opt...)).Run()
 	return
 }
 
@@ -74,9 +73,9 @@ type rpcRS struct {
 	V2 int `json:"v2"`
 }
 
-func rpcServerWrap(f func(ctx SessionContext, rq *rpcRQ, rs *rpcRS) (err error)) func(ctx process.Context) {
+func rpcServerWrap(f func(ctx server.SessionContext, rq *rpcRQ, rs *rpcRS) (err error)) func(ctx process.Context) {
 	return func(c process.Context) {
-		ctx := c.(SessionContext)
+		ctx := c.(server.SessionContext)
 		in := ctx.GetRequestPacket()
 		writeRespond := func(body interface{}) {
 			out, err := ctx.NewResponse(in, body, nil)

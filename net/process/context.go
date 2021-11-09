@@ -16,36 +16,6 @@ type Link interface {
 	Notice(msg interface{}) (err error)
 	GetNetConn() net.Conn
 }
-
-//
-type Client interface {
-	Link
-}
-
-type Server interface {
-	Notice(msg interface{}) (err error)
-}
-
-type serverContext struct {
-	server Server
-	link   Link
-}
-
-// GetNetConn get source net.Conn
-func (ctx *serverContext) GetNetConn() net.Conn {
-	return ctx.link.GetNetConn()
-}
-
-// GetServer  get server link
-func (ctx *serverContext) GetServer() Server {
-	return ctx.server
-}
-
-// Notice
-func (ctx *serverContext) Notice(msg interface{}) (err error) {
-	return
-}
-
 //go:generate gogen imake . -t=wrapContext -r wrapContext=Context -t=wrapLogEntry -r wrapLogEntry=LogEntry -o context.gen.go --merge
 
 // Context 基础

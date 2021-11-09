@@ -144,6 +144,8 @@ func (s *WsServer) HttpServeWs(w http.ResponseWriter, r *http.Request) {
 				s.opts.ProcessOptions...,
 			),
 		),
+		ctx:    context.Background(),
+		cancel: func() {},
 	}
 	sess.opts = s.opts
 	sess.Process.Inner.ApplyOption(
@@ -170,9 +172,6 @@ func (s *WsServer) HttpServeWs(w http.ResponseWriter, r *http.Request) {
 	// config session context
 	if s.opts.StopImmediately {
 		sess.ctx, sess.cancel = context.WithCancel(context.Background())
-	} else {
-		sess.ctx = context.Background()
-		sess.cancel = func() {}
 	}
 	// apply config
 	sess.Process.Inner.ApplyOption(

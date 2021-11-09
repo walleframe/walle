@@ -145,6 +145,17 @@ func (sess *WsSession) readLoop() {
 	}
 }
 
+// WithValue wrap context.WithValue
+func (sess *WsSession) WithSessionValue(key, value interface{}) {
+	sess.ctx = context.WithValue(sess.ctx, key, value)
+	return
+}
+
+// Value wrap context.Context.Value
+func (sess *WsSession) SessionValue(key interface{}) interface{} {
+	return sess.ctx.Value(key)
+}
+
 func (sess *WsSession) newContext(ctx process.Context, ud interface{}) process.Context {
 	return &sessionCtx{
 		Context:   ctx,

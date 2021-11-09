@@ -36,6 +36,12 @@ type Session interface {
 	GetConn() interface{}
 	// GetServer get raw server(*WsServer,*TcpServer...)
 	GetServer() Server
+
+	// WithSessionValue wrap context.WithValue
+	WithSessionValue(key, value interface{})
+
+	// SessionValue wrap context.Context.Value
+	SessionValue(key interface{}) interface{}
 }
 
 type SessionContext interface {
