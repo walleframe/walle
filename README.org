@@ -201,6 +201,10 @@ func walleServer() interface{} {
 		"WriteMethods": WriteMethod(WriteAsync),
 		// SendQueueSize async send queue size
 		"SendQueueSize": int(1024),
+		// Heartbeat use websocket ping/pong.
+		"Heartbeat": time.Duration(0),
+		// HttpServeMux custom set mux
+		"HttpServeMux": (*http.ServeMux)(http.DefaultServeMux),
 	}
 }
 #+end_src

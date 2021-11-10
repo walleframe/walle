@@ -53,6 +53,8 @@ type ServerOptions struct {
 	SendQueueSize int
 	// Heartbeat use websocket ping/pong.
 	Heartbeat time.Duration
+	// HttpServeMux custom set mux
+	HttpServeMux (*http.ServeMux)
 }
 
 // Addr Server Addr
@@ -217,6 +219,15 @@ func WithHeartbeat(v time.Duration) ServerOption {
 	}
 }
 
+// HttpServeMux custom set mux
+func WithHttpServeMux(v *http.ServeMux) ServerOption {
+	return func(cc *ServerOptions) ServerOption {
+		previous := cc.HttpServeMux
+		cc.HttpServeMux = v
+		return WithHttpServeMux(previous)
+	}
+}
+
 // SetOption modify options
 func (cc *ServerOptions) SetOption(opt ServerOption) {
 	_ = opt(cc)
@@ -286,6 +297,7 @@ func newDefaultServerOptions() *ServerOptions {
 		WriteMethods:    WriteAsync,
 		SendQueueSize:   1024,
 		Heartbeat:       0,
+		HttpServeMux:    http.DefaultServeMux,
 	}
 	return cc
 }

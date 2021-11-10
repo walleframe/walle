@@ -73,6 +73,8 @@ func walleServer() interface{} {
 		"SendQueueSize": int(1024),
 		// Heartbeat use websocket ping/pong.
 		"Heartbeat": time.Duration(0),
+		// HttpServeMux custom set mux
+		"HttpServeMux": (*http.ServeMux)(http.DefaultServeMux),
 	}
 }
 
@@ -98,16 +100,17 @@ func NewServer(opts ...ServerOption) *WsServer {
 		clients: make(map[Session]bool),
 		server:  &http.Server{},
 	}
+	s.server.Handler = s.opts.HttpServeMux
 	return s
 }
 
 func (s *WsServer) Serve(ln net.Listener) (err error) {
-	http.HandleFunc(s.opts.WsPath, s.HttpServeWs)
+	s.opts.HttpServeMux.HandleFunc(s.opts.WsPath, s.HttpServeWs)
 	return s.server.Serve(ln)
 }
 
 func (s *WsServer) Run(addr string) (err error) {
-	http.HandleFunc(s.opts.WsPath, s.HttpServeWs)
+	s.opts.HttpServeMux.HandleFunc(s.opts.WsPath, s.HttpServeWs)
 	if addr == "" {
 		s.server.Addr = s.opts.Addr
 	} else {
