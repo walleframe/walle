@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/aggronmagi/walle/net/process"
+	"github.com/aggronmagi/walle/zaplog"
 
 	. "github.com/aggronmagi/walle/net/ws"
 )
@@ -40,6 +41,24 @@ func main() {
 		fmt.Println("call rpc ", uri, err, rs)
 	}
 	call("f1")
-	call("f2")
 	call("f3")
+	call("f2")
+
+	n := 10000
+	zaplog.Default.SetLogLevel(zaplog.EMERG)
+
+	callBench := func(uri string) {
+		ctx := context.Background()
+		rs := &rpcRS{}
+		err = cli.Call(ctx, uri, rq, rs, process.NewCallOptions(
+			process.WithCallOptionsTimeout(time.Second),
+		))
+	}
+
+	start := time.Now()
+	for k := 0; k < n; k++ {
+		callBench("f1")
+	}
+	use := time.Now().Sub(start)
+	fmt.Println("use:", use, "--", use/time.Duration(n))
 }

@@ -23,6 +23,7 @@ func main() {
 		panic(err)
 	}
 	zaplog.Default = log
+	zaplog.Default.SetLogLevel(zaplog.EMERG)
 
 	r := &process.MixRouter{}
 	r.Method("f1", rpcServerWrap(func(ctx server.SessionContext, rq *rpcRQ, rs *rpcRS) (err error) {

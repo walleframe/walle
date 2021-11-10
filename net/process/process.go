@@ -151,6 +151,7 @@ func (p *Process) Call(ctx context.Context, uri interface{}, rq, rs interface{},
 		defer cancel()
 		ctx = nctx
 	}
+
 	err = p.WritePacket(ctx, req)
 	if err != nil {
 		p.Opts.Logger.Develop8("write data failed", zap.Error(err), zap.Any("reqeust", rq), zap.Object("packet", req))

@@ -3,6 +3,7 @@ package ws
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"runtime"
 	"sync"
 	"testing"
@@ -17,7 +18,8 @@ import (
 )
 
 var (
-	port int
+	benchmarkPort int
+	client        Client
 )
 
 func TestMain(m *testing.M) {
@@ -25,11 +27,48 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		panic(err)
 	}
-	port = p
+	benchmarkPort = p
+
+	fmt.Println("port:", benchmarkPort)
+
+	r := &process.MixRouter{}
+	r.Method("f1", rpcServerRF(func(ctx SessionContext, rq *rpcRQ, rs *rpcRS) (err error) {
+		rs.V1 = rq.M + rq.N
+		rs.V2 = rq.M - rq.N
+		return
+	}))
+	r.Method("f2", rpcServerRF(func(ctx SessionContext, rq *rpcRQ, rs *rpcRS) (err error) {
+		rs.V1 = rq.M
+		rs.V2 = rq.N
+		return
+	}))
+	r.Method("f3", rpcServerRF(func(ctx SessionContext, rq *rpcRQ, rs *rpcRS) (err error) {
+		err = packet.NewError(1000, "custom error")
+		return
+	}))
+
+	defer runServer(benchmarkPort,
+		WithRouter(r),
+		WithProcessOptions(
+			process.WithMsgCodec(process.MessageCodecJSON),
+		),
+		WithHeartbeat(time.Second),
+		WithWsPath("/bench"),
+	)()
+
+	cli, err := NewClient(fmt.Sprintf("ws://localhost:%d/bench", benchmarkPort), nil,
+		process.WithMsgCodec(process.MessageCodecJSON),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	client = cli
+
 	m.Run()
 }
 
-func runServer(t *testing.T, opt ...ServerOption) (stop func()) {
+func runServer(port int, opt ...ServerOption) (stop func()) {
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	app.WaitStopSignal = func() {
@@ -40,7 +79,7 @@ func runServer(t *testing.T, opt ...ServerOption) (stop func()) {
 	}
 	opt = append(opt,
 		WithAddr(fmt.Sprintf("localhost:%d", port)),
-		WithWsPath("/ws"),
+		WithHttpServeMux(http.NewServeMux()),
 	)
 	go app.CreateApp(NewService("ws", opt...)).Run()
 	runtime.Gosched()
@@ -89,6 +128,10 @@ func rpcServerRF(f func(ctx SessionContext, rq *rpcRQ, rs *rpcRS) (err error)) f
 }
 
 func TestWs(t *testing.T) {
+	p, err := util.GetFreePort()
+	if err != nil {
+		panic(err)
+	}
 	r := &process.MixRouter{}
 	r.Method("f1", rpcServerRF(func(ctx SessionContext, rq *rpcRQ, rs *rpcRS) (err error) {
 		rs.V1 = rq.M + rq.N
@@ -104,14 +147,15 @@ func TestWs(t *testing.T) {
 		err = packet.NewError(1000, "custom error")
 		return
 	}))
-	defer runServer(t,
+	defer runServer(p,
 		WithRouter(r),
 		WithProcessOptions(
 			process.WithMsgCodec(process.MessageCodecJSON),
 		),
+		WithHeartbeat(time.Second),
 	)()
 
-	cli, err := NewClient(fmt.Sprintf("ws://localhost:%d/ws", port), nil,
+	cli, err := NewClient(fmt.Sprintf("ws://localhost:%d/ws", p), nil,
 		process.WithMsgCodec(process.MessageCodecJSON),
 	)
 	if err != nil {
@@ -146,4 +190,15 @@ func TestWs(t *testing.T) {
 		process.WithCallOptionsTimeout(time.Second),
 	))
 	assert.NotNil(t, err, "f3 return error")
+}
+
+func BenchmarkWsClient(b *testing.B) {
+
+	b.ResetTimer()
+	for k := 0; k < b.N; k++ {
+		client.Call(context.Background(), "f1", &rpcRQ{}, &rpcRS{}, process.NewCallOptions(
+			process.WithCallOptionsTimeout(time.Second),
+		))
+	}
+
 }
