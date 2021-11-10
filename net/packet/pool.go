@@ -35,5 +35,12 @@ func (p *syncPool) Pop() *Packet {
 }
 
 func (p *syncPool) Push(v *Packet) {
+	v.Flag = 0
+	v.Cmd = 0
+	v.Sequence = 0
+	v.Metadata = nil
+	v.Body = nil
+	v.Uri = ""
+	v.ReservedRq = 0
 	p.Pool.Put(v)
 }
