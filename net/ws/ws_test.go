@@ -10,9 +10,11 @@ import (
 	"time"
 
 	"github.com/aggronmagi/walle/app"
+	"github.com/aggronmagi/walle/internal/util/test"
 	"github.com/aggronmagi/walle/net/packet"
 	"github.com/aggronmagi/walle/net/process"
 	"github.com/aggronmagi/walle/util"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
@@ -128,6 +130,10 @@ func rpcServerRF(f func(ctx SessionContext, rq *rpcRQ, rs *rpcRS) (err error)) f
 }
 
 func TestWs(t *testing.T) {
+	mc := gomock.NewController(t)
+	defer mc.Finish()
+	f := test.NewMockFuncCall(mc)
+
 	p, err := util.GetFreePort()
 	if err != nil {
 		panic(err)
@@ -147,13 +153,20 @@ func TestWs(t *testing.T) {
 		err = packet.NewError(1000, "custom error")
 		return
 	}))
-	defer runServer(p,
+	stopServer := runServer(p,
 		WithRouter(r),
 		WithProcessOptions(
 			process.WithMsgCodec(process.MessageCodecJSON),
 		),
 		WithHeartbeat(time.Second),
-	)()
+		WithNewSession(func(in Session, r *http.Request) (Session, error) {
+			f.EXPECT().Call("close notify", in)
+			in.AddCloseFunc(func(sess Session) {
+				f.Call("close notify", sess)
+			})
+			return in, nil
+		}),
+	)
 
 	cli, err := NewClient(fmt.Sprintf("ws://localhost:%d/ws", p), nil,
 		process.WithMsgCodec(process.MessageCodecJSON),
@@ -190,6 +203,11 @@ func TestWs(t *testing.T) {
 		process.WithCallOptionsTimeout(time.Second),
 	))
 	assert.NotNil(t, err, "f3 return error")
+	err = cli.Close()
+	assert.Nil(t, err, "close client error")
+	time.Sleep(time.Millisecond * 100)
+	stopServer()
+	// time.Sleep(time.Second)
 }
 
 func BenchmarkWsClient(b *testing.B) {
