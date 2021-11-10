@@ -30,6 +30,8 @@ type WsSession struct {
 	//
 	writeMethod WriteMethod
 	opts        *ServerOptions
+	// close call back
+	closeChain []func(Session)
 }
 
 func (sess *WsSession) Write(in []byte) (n int, err error) {
@@ -96,6 +98,9 @@ func (sess *WsSession) Run() {
 		go sess.writeLoop()
 	}
 	sess.readLoop()
+	for _, ntf := range sess.closeChain {
+		ntf(sess)
+	}
 	sess.Process.Clean()
 }
 
@@ -147,7 +152,7 @@ func (sess *WsSession) readLoop() {
 	log := sess.Process.Opts.Logger
 	if sess.svr != nil {
 		if sess.opts.Heartbeat > 0 {
-			// FIXME: time set 
+			// FIXME: time set
 			sess.conn.SetReadDeadline(time.Now().Add(sess.opts.Heartbeat + time.Second))
 			sess.conn.SetPongHandler(func(string) error {
 				sess.conn.SetReadDeadline(time.Now().Add(sess.opts.Heartbeat + time.Second))
@@ -190,6 +195,10 @@ func (sess *WsSession) WithSessionValue(key, value interface{}) {
 // Value wrap context.Context.Value
 func (sess *WsSession) SessionValue(key interface{}) interface{} {
 	return sess.ctx.Value(key)
+}
+
+func (sess *WsSession) AddCloseFunc(f func(sess Session)) {
+	sess.closeChain = append(sess.closeChain, f)
 }
 
 func (sess *WsSession) newContext(ctx process.Context, ud interface{}) process.Context {

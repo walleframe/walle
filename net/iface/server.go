@@ -42,6 +42,8 @@ type Session interface {
 
 	// SessionValue wrap context.Context.Value
 	SessionValue(key interface{}) interface{}
+	// AddCloseFunc session close notify
+	AddCloseFunc(f func(sess Session))
 }
 
 type SessionContext interface {
