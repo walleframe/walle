@@ -59,6 +59,9 @@ func (sess *WsSession) Write(in []byte) (n int, err error) {
 	// websocket write
 	sess.mux.Lock()
 	defer sess.mux.Unlock()
+	if sess.opts.WriteTimeout > 0 {
+		sess.conn.SetWriteDeadline(time.Now().Add(sess.opts.WriteTimeout))
+	}
 	err = sess.conn.WriteMessage(websocket.BinaryMessage, in)
 	if err != nil {
 		log.Error3("write message failed", zap.Error(err))

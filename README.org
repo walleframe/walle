@@ -11,6 +11,9 @@ walle目标是开箱即用. 灵活配置. 高性能的服务框架.开发中...
  - [ ] gnet
  - [ ] kcp
  - [X] websocket
+** TODO 事件监听
+ - [ ] 链接事件
+ - [ ] 网络层事件
 ** TODO 服务注册与发现使用
  - [ ] etcd
 ** TODO 工具代码包
@@ -208,5 +211,7 @@ func walleServer() interface{} {
 	}
 }
 #+end_src
+
+[[./example/ws][websocket例子]]
 
 
