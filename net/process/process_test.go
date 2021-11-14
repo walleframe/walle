@@ -322,3 +322,70 @@ func TestProcess_Notify(t *testing.T) {
 	assert.Nil(t, err, "unmarshal data error")
 	assert.EqualValues(t, rq.String(), real.String(), "final data")
 }
+
+func BenchmarkProcess(b *testing.B) {
+
+	type testJsonST struct {
+		V int `json:"v"`
+	}
+	testMsg := &testJsonST{
+		V: 100,
+	}
+	jsonMsg, err := MessageCodecJSON.Marshal(testMsg)
+	if err != nil {
+		b.Fatal(err)
+	}
+	rq := &packet.Packet{
+		Cmd:      int32(packet.Command_Request),
+		Sequence: 1,
+		Metadata: map[string]string{"k": "v", "n": "10"},
+		Uri:      "kk",
+		Body:     []byte(jsonMsg),
+	}
+
+	// 路由
+	r := &MixRouter{}
+	r.Use(func(ctx Context) {
+		ctx.Next(ctx)
+	})
+	r.Method("kk",
+		func(ctx Context) {
+			// rq := &testJsonST{}
+			// err := ctx.Bind(rq)
+			// if err != nil {
+			// 	b.Fatal(err)
+			// }
+		},
+		func(ctx Context) {
+			ctx.Next(ctx)
+		},
+	)
+
+	buf := &bytes.Buffer{}
+	p := NewProcess(
+		NewInnerOptions(
+			WithInnerOptionsOutput(buf),
+			WithInnerOptionsRouter(r),
+		),
+		NewProcessOptions(
+			WithLogger(
+				zaplog.NewLogger(zaplog.DEV, zap.NewNop()),
+			),
+			WithDispatchDataFilter(func(data []byte, next PacketDispatcherFunc) (err error) {
+				err = next(data)
+				return
+			}),
+			WithMsgCodec(MessageCodecJSON),
+		),
+	)
+	_ = p
+
+	data, _ := PacketCodecProtobuf.Marshal(rq)
+
+	b.ResetTimer()
+
+	for k := 0; k < b.N; k++ {
+		p.OnRead(data)
+	}
+
+}

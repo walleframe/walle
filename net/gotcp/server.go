@@ -1,9 +1,12 @@
-package ws
+package gotcp
 
 import (
 	"context"
+	"encoding/binary"
+	"io"
+	"math"
 	"net"
-	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -11,7 +14,6 @@ import (
 	"github.com/aggronmagi/walle/net/packet"
 	"github.com/aggronmagi/walle/net/process"
 	"github.com/aggronmagi/walle/zaplog"
-	"github.com/gorilla/websocket"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 )
@@ -39,12 +41,12 @@ func walleServer() interface{} {
 	return map[string]interface{}{
 		// Addr Server Addr
 		"Addr": string(":8080"),
-		// WsPath websocket server path
-		"WsPath": string("/ws"),
-		// Upgrade websocket upgrade
-		"Upgrade": (*websocket.Upgrader)(DefaultUpgrade),
-		// SessoinFilter
-		"UpgradeFail": func(w http.ResponseWriter, r *http.Request, reason error) {},
+		// Listen option. can replace kcp wrap
+		"Listen": func(addr string) (ln net.Listener, err error) {
+			return net.Listen("tcp", addr)
+		},
+		// NetOption modify raw options
+		"NetConnOption": func(net.Conn) {},
 		// accepted load limit
 		"AcceptLoadLimit": func(sess Session, cnt int64) bool { return false },
 		// Process Options
@@ -58,76 +60,137 @@ func walleServer() interface{} {
 		// SessionLogger custom session logger
 		"SessionLogger": func(sess Session, global *zaplog.Logger) (r *zaplog.Logger) { return global },
 		// NewSession custom session
-		"NewSession": func(in Session, r *http.Request) (Session, error) { return in, nil },
+		"NewSession": func(in Session) (Session, error) { return in, nil },
 		// StopImmediately when session finish,business finish immediately.
 		"StopImmediately": false,
 		// ReadTimeout read timetou
 		"ReadTimeout": time.Duration(0),
 		// WriteTimeout write timeout
 		"WriteTimeout": time.Duration(0),
-		// MaxMessageLimit limit message size
-		"MaxMessageLimit": int(0),
 		// Write network data method.
 		"WriteMethods": WriteMethod(WriteAsync),
 		// SendQueueSize async send queue size
 		"SendQueueSize": int(1024),
 		// Heartbeat use websocket ping/pong.
 		"Heartbeat": time.Duration(0),
-		// HttpServeMux custom set mux
-		"HttpServeMux": (*http.ServeMux)(http.DefaultServeMux),
+		// tcp packet head
+		"PacketHeadBuf": func() []byte {
+			return make([]byte, 4)
+		},
+		// read tcp packet head size
+		"ReadSize": func(head []byte) (size int) {
+			size = int(binary.LittleEndian.Uint32(head))
+			return
+		},
+		// write tcp packet head size
+		"WriteSize": func(head []byte, size int) (err error) {
+			if size >= math.MaxUint32 {
+				return packet.ErrPacketTooLarge
+			}
+			binary.LittleEndian.PutUint32(head, uint32(size))
+			return
+		},
+		// ReadBufferSize 一定要大于最大消息的大小.每个链接一个缓冲区。
+		"ReadBufferSize": int(65535),
+		// ReuseReadBuffer 复用read缓存区。影响Process.DispatchFilter.
+		// 如果此选项设置为true，在DispatchFilter内如果开启协程，需要手动复制内存。
+		// 如果在DispatchFilter内不开启协程，设置为true可以减少内存分配。
+		// 默认为false,是为了防止错误的配置导致bug。
+		"ReuseReadBuffer": false,
+		// MaxMessageSizeLimit limit message size
+		"MaxMessageSizeLimit": int(0),
 	}
 }
 
-var DefaultUpgrade = &websocket.Upgrader{
-	ReadBufferSize:  4096,
-	WriteBufferSize: 4096,
-}
-
-// WsServer websocket server
-type WsServer struct {
+// GoServer websocket server
+type GoServer struct {
 	acceptLoad atomic.Int64
 	pkgLoad    atomic.Int64
 	sequence   atomic.Int64
 	opts       *ServerOptions
-	server     *http.Server
 	mux        sync.RWMutex
-	clients    map[*WsSession]Session
+	ln         net.Listener
+	clients    map[Session]bool
+	stop       chan struct{}
 }
 
-func NewServer(opts ...ServerOption) *WsServer {
-	s := &WsServer{
+func NewServer(opts ...ServerOption) *GoServer {
+	s := &GoServer{
 		opts:    NewServerOptions(opts...),
-		clients: make(map[*WsSession]iface.Session),
-		server:  &http.Server{},
+		clients: make(map[Session]bool),
 	}
-	s.server.Handler = s.opts.HttpServeMux
+	// check option limit
+	if s.opts.MaxMessageSizeLimit > s.opts.ReadBufferSize {
+		s.opts.ReadBufferSize = s.opts.MaxMessageSizeLimit
+	}
+	if s.opts.MaxMessageSizeLimit == 0 {
+		s.opts.MaxMessageSizeLimit = s.opts.ReadBufferSize
+	}
+	// modify limit for write check
+	s.opts.MaxMessageSizeLimit -= len(s.opts.PacketHeadBuf())
 	return s
 }
 
-func (s *WsServer) Serve(ln net.Listener) (err error) {
-	s.opts.HttpServeMux.HandleFunc(s.opts.WsPath, s.HttpServeWs)
-	return s.server.Serve(ln)
+func (s *GoServer) Listen(addr string) (err error) {
+	if addr == "" {
+		addr = s.opts.Addr
+	} else {
+		s.opts.Addr = addr
+	}
+	s.ln, err = s.opts.Listen(addr)
+	return
 }
 
-func (s *WsServer) Run(addr string) (err error) {
-	s.opts.HttpServeMux.HandleFunc(s.opts.WsPath, s.HttpServeWs)
-	if addr == "" {
-		s.server.Addr = s.opts.Addr
-	} else {
-		s.server.Addr = addr
+func (s *GoServer) Serve(ln net.Listener) (err error) {
+	if ln != nil {
+		s.ln = ln
 	}
-	return s.server.ListenAndServe()
+	return s.runAcceptLoop()
+}
+
+func (s *GoServer) Run(addr string) (err error) {
+	if addr == "" {
+		addr = s.opts.Addr
+	} else {
+		s.opts.Addr = addr
+	}
+	s.ln, err = s.opts.Listen(addr)
+	if err != nil {
+		return
+	}
+	return s.Serve(s.ln)
+}
+
+func (s *GoServer) runAcceptLoop() (err error) {
+	var tempDelay time.Duration
+	for {
+		conn, err := s.ln.Accept()
+		if err != nil {
+			if ne, ok := err.(net.Error); ok && ne.Temporary() {
+				if tempDelay == 0 {
+					tempDelay = 5 * time.Millisecond
+				} else {
+					tempDelay *= 2
+				}
+				if max := 1 * time.Second; tempDelay > max {
+					tempDelay = max
+				}
+				time.Sleep(tempDelay)
+				continue
+			}
+			if strings.Contains(err.Error(), "use of closed network connection") {
+				return io.EOF
+			}
+			return err
+		}
+		tempDelay = 0
+
+		go s.accpetConn(conn)
+	}
 }
 
 // serveWs handles websocket requests from the peer.
-func (s *WsServer) HttpServeWs(w http.ResponseWriter, r *http.Request) {
-	// upgrade websocket
-	conn, err := DefaultUpgrade.Upgrade(w, r, nil)
-	if err != nil {
-		s.opts.Logger.Error3("upgrade websocket failed", zap.Error(err))
-		s.opts.UpgradeFail(w, r, err)
-		return
-	}
+func (s *GoServer) accpetConn(conn net.Conn) {
 	// cleanup when exit // cleanup :=
 	defer func() {
 		s.acceptLoad.Dec()
@@ -137,7 +200,7 @@ func (s *WsServer) HttpServeWs(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 	// new session
-	sess := &WsSession{
+	sess := &GoSession{
 		conn: conn,
 		svr:  s,
 		Process: process.NewProcess(
@@ -159,20 +222,23 @@ func (s *WsServer) HttpServeWs(w http.ResponseWriter, r *http.Request) {
 	)
 	// session count limit
 	if s.opts.AcceptLoadLimit(sess, s.acceptLoad.Inc()) {
-		s.opts.Logger.Develop8("websocket session count failed", zap.Error(err))
+		s.opts.Logger.Develop8("session count failed")
 		// cleanup()
 		return
 	}
+	// modify options
+	s.opts.NetConnOption(conn)
 	// maybe cusotm session
-	newSess, err := s.opts.NewSession(sess, r)
+	newSess, err := s.opts.NewSession(sess)
 	if err != nil {
 		s.opts.Logger.Error3("new session failed", zap.Error(err))
 		// cleanup()
 		return
 	}
+
 	// save map
 	s.mux.Lock()
-	s.clients[sess] = newSess
+	s.clients[newSess] = true
 	s.mux.Unlock()
 	// config session context
 	if s.opts.StopImmediately {
@@ -191,7 +257,7 @@ func (s *WsServer) HttpServeWs(w http.ResponseWriter, r *http.Request) {
 	// cleanup map
 	defer func() {
 		s.mux.Lock()
-		delete(s.clients, sess)
+		delete(s.clients, newSess)
 		s.mux.Unlock()
 	}()
 	// run client loop
@@ -205,7 +271,7 @@ func (s *WsServer) HttpServeWs(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *WsServer) Broadcast(uri interface{}, msg interface{}, meta ...process.MetadataOption) error {
+func (s *GoServer) Broadcast(uri interface{}, msg interface{}, meta ...process.MetadataOption) error {
 	s.mux.RLock()
 	defer s.mux.RUnlock()
 	if len(s.clients) < 1 {
@@ -229,7 +295,7 @@ func (s *WsServer) Broadcast(uri interface{}, msg interface{}, meta ...process.M
 	return nil
 }
 
-func (s *WsServer) BroadcastFilter(filter func(Session) bool, uri interface{}, msg interface{}, meta ...process.MetadataOption) error {
+func (s *GoServer) BroadcastFilter(filter func(Session) bool, uri interface{}, msg interface{}, meta ...process.MetadataOption) error {
 	s.mux.RLock()
 	defer s.mux.RUnlock()
 	if len(s.clients) < 1 {
@@ -256,7 +322,7 @@ func (s *WsServer) BroadcastFilter(filter func(Session) bool, uri interface{}, m
 	return nil
 }
 
-func (s *WsServer) ForEach(f func(Session)) {
+func (s *GoServer) ForEach(f func(Session)) {
 	s.mux.RLock()
 	defer s.mux.RUnlock()
 	if len(s.clients) < 1 {
@@ -267,8 +333,8 @@ func (s *WsServer) ForEach(f func(Session)) {
 	}
 }
 
-func (s *WsServer) Shutdown(ctx context.Context) (err error) {
-	err = s.server.Shutdown(ctx)
+func (s *GoServer) Shutdown(ctx context.Context) (err error) {
+	err = s.ln.Close()
 	s.mux.Lock()
 	defer s.mux.Unlock()
 	for cli := range s.clients {

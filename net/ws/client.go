@@ -15,7 +15,7 @@ import (
 func NewClientEx(addr string, head http.Header,
 	inner *process.InnerOptions,
 	svr *ServerOptions, // TODO 客户端独立选项配置
-	opts ...process.ProcessOption) (_ Client, err error) {
+) (_ Client, err error) {
 	conn, _, err := websocket.DefaultDialer.Dial(addr, head)
 	if err != nil {
 		return
@@ -23,7 +23,7 @@ func NewClientEx(addr string, head http.Header,
 	cli := &WsSession{
 		Process: process.NewProcess(
 			inner,
-			process.NewProcessOptions(opts...),
+			process.NewProcessOptions(svr.ProcessOptions...),
 		),
 		conn: conn,
 	}
@@ -41,5 +41,7 @@ func NewClientEx(addr string, head http.Header,
 
 // NewClient 新建客户端
 func NewClient(addr string, head http.Header, opts ...process.ProcessOption) (_ Client, err error) {
-	return NewClientEx(addr, head, process.NewInnerOptions(), NewServerOptions(), opts...)
+	return NewClientEx(addr, head, process.NewInnerOptions(), NewServerOptions(
+		WithProcessOptions(opts...),
+	))
 }

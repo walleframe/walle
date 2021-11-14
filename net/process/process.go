@@ -204,10 +204,9 @@ func (p *Process) AsyncCall(ctx context.Context, uri interface{}, rq interface{}
 	p.saveSession(req.Sequence, session)
 
 	// timeout options
+	var cancel func()
 	if opts.Timeout > 0 {
-		nctx, cancel := context.WithTimeout(ctx, opts.Timeout)
-		defer cancel()
-		ctx = nctx
+		ctx, cancel = context.WithTimeout(ctx, opts.Timeout)
 	}
 	err = p.WritePacket(ctx, req)
 	if err != nil {
@@ -217,16 +216,26 @@ func (p *Process) AsyncCall(ctx context.Context, uri interface{}, rq interface{}
 		return
 	}
 
-	if opts.Timeout < 1 {
+	if cancel == nil {
 		return
 	}
 	// async wait. default run wait in another gorountine
 	opts.WaitFilter(func() {
+		defer cancel()
 		select {
 		case <-ctx.Done():
 			if last := p.getDelSession(req.Sequence); last != nil {
-				p.Opts.PacketPool.Push(req)
 				p.Opts.Logger.Develop8("async request rpc timeout", zap.Any("reqeust", rq), zap.Object("packet", req))
+				wrapCtx := &wrapContext{}
+				wrapCtx.p = p
+				wrapCtx.log = p.Opts.Logger
+				wrapCtx.src = p.Inner.ParentCtx
+				wrapCtx.in, _ = p.NewPacket(packet.Command_Response, uri, packet.ErrTimeout, nil, true)
+				wrapCtx.handlers = last.aFunc
+				// aFilter -> ctx.Next(ctx)
+				// NOTE: sess.aReq only valid in aFilter.
+				last.aFilter(p.Inner.NewContext(wrapCtx, p.Inner.BindData), last.aReq, wrapCtx.in)
+				p.Opts.PacketPool.Push(req)
 			}
 		}
 	})
@@ -462,6 +471,9 @@ func (p *Process) saveSession(id uint64, sess *rpcSession) {
 	p.mux.Lock()
 	if p.sessionMap == nil {
 		p.sessionMap = make(map[uint64]*rpcSession)
+	}
+	if _, ok := p.sessionMap[id]; ok {
+		panic("same session id")
 	}
 	p.sessionMap[id] = sess
 	p.mux.Unlock()

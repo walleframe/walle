@@ -2,6 +2,7 @@ package zaplog
 
 import (
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 // Level new log level
@@ -47,6 +48,9 @@ const (
 // ModifyZapConfig must set level key empty.
 func ModifyZapConfig(cfg *zap.Config) {
 	cfg.EncoderConfig.LevelKey = ""
+	//if cfg.EncoderConfig.EncodeTime == nil {
+		cfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	//}
 	return
 }
 

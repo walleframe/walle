@@ -6,11 +6,13 @@ walle目标是开箱即用. 灵活配置. 高性能的服务框架.开发中...
 开发阶段，API并不稳定
 #+end_quote
 * 进度
-** TODO 网络层支持以下接口
- - [ ] gotcp
- - [ ] gnet
- - [ ] kcp
+** DONE 网络层支持以下接口
+CLOSED: [2021-11-16 二 21:59]
+ - [X] gotcp
+ - [X] gnet
+ - [X] kcp
  - [X] websocket
+** TODO ClientProxy
 ** TODO 事件监听
  - [ ] 链接事件
  - [ ] 网络层事件

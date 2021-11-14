@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"context"
 	"net"
 
 	"github.com/aggronmagi/walle/app"
@@ -32,7 +33,7 @@ func (svc *WsService) Start() (err error) {
 	return
 }
 func (svc *WsService) Stop() {
-	svc.svr.Shutdown()
+	svc.svr.Shutdown(context.Background())
 	return
 }
 func (svc *WsService) Finish() {

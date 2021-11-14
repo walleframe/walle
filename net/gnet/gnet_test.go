@@ -1,9 +1,8 @@
-package ws
+package gnet
 
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"runtime"
 	"sync"
 	"testing"
@@ -14,14 +13,16 @@ import (
 	"github.com/aggronmagi/walle/net/packet"
 	"github.com/aggronmagi/walle/net/process"
 	"github.com/aggronmagi/walle/util"
+	"github.com/aggronmagi/walle/zaplog"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/atomic"
 	"go.uber.org/zap"
 )
 
 var (
-	benchmarkPort int
-	client        Client
+	client Client
+	bp     int
 )
 
 func TestMain(m *testing.M) {
@@ -29,9 +30,9 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		panic(err)
 	}
-	benchmarkPort = p
+	bp = p
 
-	fmt.Println("port:", benchmarkPort)
+	fmt.Println("port:", p)
 
 	r := &process.MixRouter{}
 	r.Method("f1", rpcServerRF(func(ctx SessionContext, rq *rpcRQ, rs *rpcRS) (err error) {
@@ -53,23 +54,32 @@ func TestMain(m *testing.M) {
 		return
 	})
 
-	defer runServer(benchmarkPort,
+	defer runServer(p,
 		WithRouter(r),
 		WithProcessOptions(
 			process.WithMsgCodec(process.MessageCodecJSON),
 		),
 		WithHeartbeat(time.Second),
-		WithWsPath("/bench"),
 	)()
 
-	cli, err := NewClient(fmt.Sprintf("ws://localhost:%d/bench", benchmarkPort), nil,
-		process.WithMsgCodec(process.MessageCodecJSON),
-	)
-	if err != nil {
-		panic(err)
-	}
+	// cli, err := NewClient(
+	// 	NewClientOptions(
+	// 		WithClientOptionsAddr(fmt.Sprintf("localhost:%d", p)),
+	// 	),
+	// 	process.WithMsgCodec(process.MessageCodecJSON),
+	// )
+	// if err != nil {
+	// 	panic(err)
+	// }
 
-	client = cli
+	// client = cli
+
+	// err = client.Call(context.Background(), "f1", &rpcRQ{}, &rpcRS{}, process.NewCallOptions())
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	// fmt.Println("rpc call success")
 
 	m.Run()
 }
@@ -85,9 +95,8 @@ func runServer(port int, opt ...ServerOption) (stop func()) {
 	}
 	opt = append(opt,
 		WithAddr(fmt.Sprintf("localhost:%d", port)),
-		WithHttpServeMux(http.NewServeMux()),
 	)
-	go app.CreateApp(NewService("ws", opt...)).Run()
+	go app.CreateApp(NewService("gnet", opt...)).Run()
 	runtime.Gosched()
 	time.Sleep(time.Microsecond)
 	return
@@ -133,7 +142,7 @@ func rpcServerRF(f func(ctx SessionContext, rq *rpcRQ, rs *rpcRS) (err error)) f
 	}
 }
 
-func TestWs(t *testing.T) {
+func TestGNet(t *testing.T) {
 	mc := gomock.NewController(t)
 	defer mc.Finish()
 	f := test.NewMockFuncCall(mc)
@@ -163,7 +172,7 @@ func TestWs(t *testing.T) {
 			process.WithMsgCodec(process.MessageCodecJSON),
 		),
 		WithHeartbeat(time.Second),
-		WithNewSession(func(in Session, r *http.Request) (Session, error) {
+		WithNewSession(func(in Session) (Session, error) {
 			f.EXPECT().Call("close notify", in)
 			in.AddCloseFunc(func(sess Session) {
 				f.Call("close notify", sess)
@@ -172,8 +181,11 @@ func TestWs(t *testing.T) {
 		}),
 	)
 
-	cli, err := NewClient(fmt.Sprintf("ws://localhost:%d/ws", p), nil,
-		process.WithMsgCodec(process.MessageCodecJSON),
+	cli, err := NewClient(
+		WithClientOptionsAddr(fmt.Sprintf("localhost:%d", p)),
+		WithClientOptionsProcessOptions(
+			process.WithMsgCodec(process.MessageCodecJSON),
+		),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -193,6 +205,16 @@ func TestWs(t *testing.T) {
 	}
 	assert.Equal(t, rq.M+rq.N, rs.V1, "rpc f1 return v1 value")
 	assert.Equal(t, rq.M-rq.N, rs.V2, "rpc f1 return v2 value")
+
+	for k := 0; k < 2000; k++ {
+		err = cli.Call(ctx, "f1", &rpcRQ{}, &rpcRS{}, process.NewCallOptions(
+			process.WithCallOptionsTimeout(time.Second*10),
+		))
+		assert.Nil(t, err, "call rpc f1 error %d", k)
+		if err != nil {
+			return
+		}
+	}
 
 	// call f2
 	err = cli.Call(ctx, "f2", rq, rs, process.NewCallOptions(
@@ -215,34 +237,55 @@ func TestWs(t *testing.T) {
 }
 
 func BenchmarkWsClient(b *testing.B) {
+	cli, err := NewClient(
+		WithClientOptionsAddr(fmt.Sprintf("localhost:%d", bp)),
+		WithClientOptionsProcessOptions(
+			process.WithMsgCodec(process.MessageCodecJSON),
+		),
+	)
+	if err != nil {
+		panic(err)
+	}
 
 	b.Run("Call", func(b *testing.B) {
 		b.ResetTimer()
 		for k := 0; k < b.N; k++ {
-			client.Call(context.Background(), "f1", &rpcRQ{}, &rpcRS{}, process.NewCallOptions(
+			err := cli.Call(context.Background(), "f1", &rpcRQ{}, &rpcRS{}, process.NewCallOptions(
 				process.WithCallOptionsTimeout(time.Second),
 			))
+			if err != nil {
+				zaplog.Default.Info5("stop fatal", zap.Error(err))
+				b.Fatal(k, err)
+			}
 		}
 	})
 
 	b.Run("AsyncCall", func(b *testing.B) {
+		wg := sync.WaitGroup{}
+		num := atomic.Int32{}
 		b.ResetTimer()
+
 		for k := 0; k < b.N; k++ {
-			client.AsyncCall(context.Background(), "f2", &rpcRQ{},
+			wg.Add(1)
+			num.Inc()
+			cli.AsyncCall(context.Background(), "f2", &rpcRQ{},
 				func(c process.Context) {
+					num.Dec()
+					wg.Done()
 				}, process.NewAsyncCallOptions(
 					process.WithAsyncCallOptionsTimeout(time.Second),
 				))
 		}
+		b.Log("wait", num.Load())
+		wg.Wait()
 	})
 
 	b.Run("Notify", func(b *testing.B) {
 		b.ResetTimer()
 		for k := 0; k < b.N; k++ {
-			client.Notify(context.Background(), "ntf", &rpcRQ{}, process.NewNoticeOptions(
+			cli.Notify(context.Background(), "ntf", &rpcRQ{}, process.NewNoticeOptions(
 				process.WithNoticeOptionsTimeout(time.Second),
 			))
 		}
 	})
-
 }
