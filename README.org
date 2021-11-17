@@ -12,12 +12,12 @@ CLOSED: [2021-11-16 二 21:59]
  - [X] gnet
  - [X] kcp
  - [X] websocket
-** TODO ClientProxy
+** TODO 分布式
+ - [ ] ClientProxy
+ - [ ] kvs(服务注册发现）
 ** TODO 事件监听
  - [ ] 链接事件
  - [ ] 网络层事件
-** TODO 服务注册与发现使用
- - [ ] etcd
 ** TODO 工具代码包
  - [ ] gpool
  - [ ] skeleton
@@ -450,3 +450,24 @@ WithClientOptionsDialer(kcp.GoTCPClientOptionDialer)
 // 服务器选项
 server.WithListen(kcp.GoTCPServerOptionListen)
 #+end_src
+* 源码目录
+#+begin_example
+.
+├── app              - 应用程序封装。确保启动顺序与正确退出
+├── example          - 代码示例
+├── internal
+│   └── util
+│       └── test     - 用于测试函数调用顺序，调用参数等。
+├── net
+│   ├── iface        - 网络接口定义
+│   ├── packet       - 网络底层包定义
+│   ├── process      - process层处理封装
+│   ├── client       - 客户端代理实现。
+│   ├── gnet         - gnet封装
+│   ├── gotcp        - net/tcp 包封装
+│   ├── kcp          - kcp 封装（实际只是gotcp包参数封装）
+│   └── ws           - websocket封装 
+├── util             - 辅助工具代码
+│   └── rtimer       - tars timewheel 代码
+└── zaplog           - 日志封装
+#+end_example
