@@ -51,8 +51,8 @@ func walleServer() interface{} {
 		"Router": Router(nil),
 		// SessionRouter custom session router
 		"SessionRouter": func(sess Session, global Router) (r Router) { return global },
-		// log interface
-		"Logger": (*zaplog.Logger)(zaplog.Default),
+		// frame log
+		"FrameLogger":(*zaplog.Logger)(zaplog.Frame),
 		// SessionLogger custom session logger
 		"SessionLogger": func(sess Session, global *zaplog.Logger) (r *zaplog.Logger) { return global },
 		// NewSession custom session
@@ -241,7 +241,7 @@ func (svr *GNetServer) OnOpened(c gnet.Conn) (out []byte, action gnet.Action) {
 // OnClosed fires when a connection has been closed.
 // The parameter:err is the last known connection error.
 func (svr *GNetServer) OnClosed(c gnet.Conn, err error) (action gnet.Action) {
-	zaplog.Default.Info5("closed conn", zap.Error(err), zap.Any("errssss", err))
+	svr.opts.FrameLogger.New("gnetserver.OnClosed").Info("closed conn", zap.Error(err), zap.Any("errssss", err))
 	src := c.Context()
 	if src == nil {
 		return
@@ -278,13 +278,13 @@ func (svr *GNetServer) AfterWrite(c gnet.Conn, b []byte) {
 func (svr *GNetServer) React(frame []byte, c gnet.Conn) (out []byte, action gnet.Action) {
 	src := c.Context()
 	if src == nil {
-		zaplog.Default.Info5("react conn no context")
+		svr.opts.FrameLogger.New("gnetserver.React").Info("react conn no context")
 		action = gnet.Close
 		return
 	}
 	sess, ok := src.(*GNetSession)
 	if !ok {
-		zaplog.Default.Info5("react conn context not session")
+		svr.opts.FrameLogger.New("gnetserver.React").Info("react conn context not session")
 		action = gnet.Close
 		return
 	}
@@ -300,12 +300,13 @@ func (svr *GNetServer) Tick() (delay time.Duration, action gnet.Action) {
 
 // serveWs handles websocket requests from the peer.
 func (svr *GNetServer) handleNewConn(conn gnet.Conn) {
+	log := svr.opts.FrameLogger.New("gnetserver.handleNewConn")
 	// cleanup when exit
 	cleanup := func() {
 		svr.acceptLoad.Dec()
 		err := conn.Close()
 		if err != nil {
-			svr.opts.Logger.Error3("close session failed", zap.Error(err))
+			log.Error("close session failed", zap.Error(err))
 		}
 	}
 	// new session
@@ -332,14 +333,14 @@ func (svr *GNetServer) handleNewConn(conn gnet.Conn) {
 	)
 	// session count limit
 	if svr.opts.AcceptLoadLimit(sess, svr.acceptLoad.Inc()) {
-		svr.opts.Logger.Develop8("session count failed")
+		log.Warn("session count limit")
 		cleanup()
 		return
 	}
 	// maybe cusotm session
 	newSess, err := svr.opts.NewSession(sess)
 	if err != nil {
-		svr.opts.Logger.Error3("new session failed", zap.Error(err))
+		log.Error("new session failed", zap.Error(err))
 		cleanup()
 		return
 	}

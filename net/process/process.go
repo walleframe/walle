@@ -2,10 +2,10 @@ package process
 
 import (
 	"context"
-	"fmt"
 	"sync"
 
 	"github.com/aggronmagi/walle/net/packet"
+	"github.com/aggronmagi/walle/zaplog"
 	"go.uber.org/zap"
 )
 
@@ -38,25 +38,30 @@ func NewProcess(inner *InnerOptions, opts *ProcessOptions) *Process {
 	return p
 }
 
+func (p *Process) logger(fname string) *zaplog.LogEntities {
+	return p.Opts.FrameLogger.New(fname)
+}
+
 // OnRead 入口函数。接收数据处理
 func (p *Process) OnRead(data []byte) (err error) {
 	// dispatch chain
 	err = p.Opts.DispatchDataFilter(data, p.innerDealPacket)
 	if err != nil {
-		p.Opts.Logger.Develop8("dispatch msg failed", zap.Error(err))
+		p.logger("process.OnRead").Error("dispatch msg failed", zap.Error(err))
 	}
 
 	return
 }
 
 func (p *Process) innerDealPacket(data []byte) (err error) {
+	log := p.logger("process.innerDealPacket")
 	// 解码网络包
 	data = p.Opts.PacketEncode.Decode(data)
 	// 反序列化网络包
 	pkg := p.Opts.PacketPool.Pop()
 	err = p.Opts.PacketCodec.Unmarshal(data, pkg)
 	if err != nil {
-		p.Opts.Logger.Notice6("unmarshal packet.Paket failed", zap.Error(err))
+		log.Error("unmarshal packet.Paket failed", zap.Error(err))
 		return err
 	}
 
@@ -66,7 +71,7 @@ func (p *Process) innerDealPacket(data []byte) (err error) {
 		sess := p.getDelSession(pkg.Sequence)
 		if sess == nil {
 			// rpc 已超时
-			p.Opts.Logger.Develop8("rpc respond session not found", zap.Object("pkg", pkg))
+			log.Error("rpc respond session not found", zap.Object("pkg", pkg))
 			return
 		}
 		// Async Call
@@ -90,7 +95,7 @@ func (p *Process) innerDealPacket(data []byte) (err error) {
 	}
 	if p.Inner.Router == nil {
 		err = packet.ErrUnexpectedCode
-		p.Opts.Logger.Notice6("unexcepted code: not set Router)", zap.Object("pkg", pkg))
+		log.Warn("unexcepted code: not set Router)", zap.Object("pkg", pkg))
 		p.Opts.PacketPool.Push(pkg)
 		return
 	}
@@ -98,7 +103,7 @@ func (p *Process) innerDealPacket(data []byte) (err error) {
 	// Request or Notice
 	handlers, err := p.Inner.Router.GetHandlers(pkg)
 	if err != nil {
-		p.Opts.Logger.Notice6("get handler failed", zap.Object("pkg", pkg), zap.Error(err))
+		log.Warn("get handler failed", zap.Object("pkg", pkg), zap.Error(err))
 		p.Opts.PacketPool.Push(pkg)
 		return err
 	}
@@ -115,7 +120,7 @@ func (p *Process) innerDealPacket(data []byte) (err error) {
 	if p.Opts.LoadLimitFilter(ctx, p.Inner.Load.Add(1), wrapCtx.in) {
 		p.Opts.PacketPool.Push(pkg)
 		p.Inner.Load.Dec()
-		p.Opts.Logger.Develop8("process load limit", zap.Object("pkg", pkg))
+		log.Debug("process load limit", zap.Object("pkg", pkg))
 		return
 	}
 	// Note: p.load.Decr() by Context
@@ -126,9 +131,10 @@ func (p *Process) innerDealPacket(data []byte) (err error) {
 }
 
 func (p *Process) Call(ctx context.Context, uri interface{}, rq, rs interface{}, opts *CallOptions) (err error) {
+	log := p.logger("process.Call")
 	if p.Inner.Output == nil {
 		err = packet.ErrUnexpectedCode
-		p.Opts.Logger.Develop8("unexcepted code: not set Output(io.Writer)", zap.Any("uri", uri))
+		log.Debug("unexcepted code: not set Output(io.Writer)", zap.Any("uri", uri))
 		return
 	}
 	req, err := p.NewPacket(packet.Command_Request, uri, rq, opts.Metadata)
@@ -154,18 +160,18 @@ func (p *Process) Call(ctx context.Context, uri interface{}, rq, rs interface{},
 
 	err = p.WritePacket(ctx, req)
 	if err != nil {
-		p.Opts.Logger.Develop8("write data failed", zap.Error(err), zap.Any("reqeust", rq), zap.Object("packet", req))
+		log.Error("write data failed", zap.Error(err), zap.Any("reqeust", rq), zap.Object("packet", req))
 		return
 	}
 
 	select {
 	case <-ctx.Done():
 		err = packet.ErrTimeout
-		p.Opts.Logger.Develop8("request rpc timeout", zap.Error(err), zap.Any("reqeust", rq), zap.Object("packet", req))
+		log.Warn("request rpc timeout", zap.Error(err), zap.Any("reqeust", rq), zap.Object("packet", req))
 		return
 	case rsp, ok := <-session.done:
 		if !ok {
-			p.Opts.Logger.Develop8("session closed", zap.Error(err), zap.Any("reqeust", rq), zap.Object("packet", req))
+			log.Warn("session closed", zap.Error(err), zap.Any("reqeust", rq), zap.Object("packet", req))
 			err = packet.ErrTimeout
 			break
 		}
@@ -178,9 +184,10 @@ func (p *Process) Call(ctx context.Context, uri interface{}, rq, rs interface{},
 }
 
 func (p *Process) AsyncCall(ctx context.Context, uri interface{}, rq interface{}, af RouterFunc, opts *AsyncCallOptions) (err error) {
+	log := p.logger("process.AsyncCall")
 	if p.Inner.Output == nil {
 		err = packet.ErrUnexpectedCode
-		p.Opts.Logger.Develop8("unexcepted code: not set Output(io.Writer)", zap.Any("uri", uri))
+		log.Error("unexcepted code: not set Output(io.Writer)", zap.Any("uri", uri))
 		return
 	}
 	req, err := p.NewPacket(packet.Command_Request, uri, rq, opts.Metadata)
@@ -210,9 +217,10 @@ func (p *Process) AsyncCall(ctx context.Context, uri interface{}, rq interface{}
 	}
 	err = p.WritePacket(ctx, req)
 	if err != nil {
+		cancel()
 		p.delSession(req.Sequence)
 		p.Opts.PacketPool.Push(req)
-		p.Opts.Logger.Develop8("write data failed", zap.Error(err), zap.Any("reqeust", rq), zap.Object("packet", req))
+		log.Error("write data failed", zap.Error(err), zap.Any("reqeust", rq), zap.Object("packet", req))
 		return
 	}
 
@@ -225,7 +233,7 @@ func (p *Process) AsyncCall(ctx context.Context, uri interface{}, rq interface{}
 		select {
 		case <-ctx.Done():
 			if last := p.getDelSession(req.Sequence); last != nil {
-				p.Opts.Logger.Develop8("async request rpc timeout", zap.Any("reqeust", rq), zap.Object("packet", req))
+				log.Warn("async request rpc timeout", zap.Any("reqeust", rq), zap.Object("packet", req))
 				wrapCtx := &wrapContext{}
 				wrapCtx.p = p
 				wrapCtx.log = p.Opts.Logger
@@ -244,9 +252,10 @@ func (p *Process) AsyncCall(ctx context.Context, uri interface{}, rq interface{}
 }
 
 func (p *Process) Notify(ctx context.Context, uri interface{}, rq interface{}, opts *NoticeOptions) (err error) {
+	log := p.logger("process.Notify")
 	if p.Inner.Output == nil {
 		err = packet.ErrUnexpectedCode
-		p.Opts.Logger.Develop8("unexcepted code: not set Output(io.Writer)", zap.Any("uri", uri))
+		log.Error("unexcepted code: not set Output(io.Writer)", zap.Any("uri", uri))
 		return
 	}
 	req, err := p.NewPacket(packet.Command_Oneway, uri, rq, opts.Metadata)
@@ -263,7 +272,7 @@ func (p *Process) Notify(ctx context.Context, uri interface{}, rq interface{}, o
 	}
 	err = p.WritePacket(ctx, req)
 	if err != nil {
-		p.Opts.Logger.Develop8("write data failed", zap.Error(err), zap.Any("reqeust", rq), zap.Object("packet", req))
+		log.Error("write data failed", zap.Error(err), zap.Any("reqeust", rq), zap.Object("packet", req))
 		return
 	}
 
@@ -277,7 +286,6 @@ func (p *Process) Clean() {
 	if p.sessionMap == nil {
 		return
 	}
-	fmt.Println("clean process")
 	// clean rpc session
 	for _, sess := range p.sessionMap {
 		// Async Call
@@ -320,21 +328,22 @@ func (p *Process) Clean() {
 // }
 
 func (p *Process) WritePacket(ctx context.Context, req *packet.Packet) (err error) {
+	log := p.logger("process.WritePacket")
 	if p.Inner.Output == nil {
 		err = packet.ErrUnexpectedCode
-		p.Opts.Logger.Error3("unexcepted code: not set Output(io.Writer)", zap.Object("packet", req))
+		log.Error("unexcepted code: not set Output(io.Writer)", zap.Object("packet", req))
 		return
 	}
 	data, err := p.MarshalPacket(req)
 	if err != nil {
-		p.Opts.Logger.Develop8("marshal packet failed", zap.Error(err), zap.Object("packet", req))
+		log.Error("marshal packet failed", zap.Error(err), zap.Object("packet", req))
 		return
 	}
 
 	// opts.Out 处理连接状态.
 	_, err = p.Inner.Output.Write(data)
 	if err != nil {
-		p.Opts.Logger.Develop8("io.write failed", zap.Error(err), zap.Object("packet", req))
+		log.Error("io.write failed", zap.Error(err), zap.Object("packet", req))
 		return
 	}
 	return
@@ -343,7 +352,7 @@ func (p *Process) WritePacket(ctx context.Context, req *packet.Packet) (err erro
 func (p *Process) MarshalPacket(req *packet.Packet) (data []byte, err error) {
 	data, err = p.Opts.PacketCodec.Marshal(req)
 	if err != nil {
-		p.Opts.Logger.Develop8("marshal message failed", zap.Error(err), zap.Object("packet", req))
+		p.logger("process.MarshalPacket").Error("marshal message failed", zap.Error(err), zap.Object("packet", req))
 		return
 	}
 
@@ -385,14 +394,14 @@ func (p *Process) NewPacket(cmd packet.Command, uri, rq interface{}, md []Metada
 		req.Uri = v
 	default:
 		err = packet.ErrUnexpectedCode
-		p.Opts.Logger.Develop8("unexcepted code: uri invaliid type.",
+		p.logger("process.NewPacket").Error("unexcepted code: uri invaliid type.",
 			zap.Any("reqeust", rq), zap.Any("uri", uri),
 		)
 		return
 	}
 	req.Body, err = p.Opts.MsgCodec.Marshal(rq)
 	if err != nil {
-		p.Opts.Logger.Develop8("marshal message failed", zap.Error(err), zap.Any("reqeust", rq))
+		p.logger("process.NewPacket").Error("marshal message failed", zap.Error(err), zap.Any("reqeust", rq))
 		p.Opts.PacketPool.Push(req)
 		return
 	}
@@ -402,7 +411,7 @@ func (p *Process) NewPacket(cmd packet.Command, uri, rq interface{}, md []Metada
 func (p *Process) NewResponse(in *packet.Packet, body interface{}, md []MetadataOption) (rsp *packet.Packet, err error) {
 	if in.Cmd != int32(packet.Command_Request) {
 		err = packet.ErrUnexpectedCode
-		p.Opts.Logger.Develop8("unexcepted code: not request packet.",
+		p.logger("process.NewResponse").Error("unexcepted code: not request packet.",
 			zap.Object("in", in),
 		)
 		return
@@ -437,7 +446,7 @@ func (p *Process) NewResponse(in *packet.Packet, body interface{}, md []Metadata
 	}
 	rsp.Body, err = p.Opts.MsgCodec.Marshal(rb)
 	if err != nil {
-		p.Opts.Logger.Develop8("marshal respond message failed", zap.Error(err))
+		p.logger("process.NewResponse").Error("marshal respond message failed", zap.Error(err))
 		p.Opts.PacketPool.Push(rsp)
 		return
 	}

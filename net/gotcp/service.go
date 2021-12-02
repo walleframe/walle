@@ -7,34 +7,34 @@ import (
 	"github.com/aggronmagi/walle/app"
 )
 
-// GNetService implement app.Service interface
-type GNetService struct {
+// GoTcpService implement app.Service interface
+type GoTcpService struct {
 	svr  *GoServer
 	name string
 	ln   net.Listener
 }
 
 func NewService(name string, opt ...ServerOption) app.Service {
-	return &GNetService{
+	return &GoTcpService{
 		name: name,
 		svr:  NewServer(opt...),
 	}
 }
 
-func (svc *GNetService) Name() string {
+func (svc *GoTcpService) Name() string {
 	return svc.name
 }
-func (svc *GNetService) Init() (err error) {
+func (svc *GoTcpService) Init() (err error) {
 	return svc.svr.Listen("")
 }
-func (svc *GNetService) Start() (err error) {
+func (svc *GoTcpService) Start() (err error) {
 	go svc.svr.Serve(nil)
 	return
 }
-func (svc *GNetService) Stop() {
+func (svc *GoTcpService) Stop() {
 	svc.svr.Shutdown(context.Background())
 	return
 }
-func (svc *GNetService) Finish() {
+func (svc *GoTcpService) Finish() {
 	return
 }

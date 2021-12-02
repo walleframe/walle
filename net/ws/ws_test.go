@@ -110,7 +110,7 @@ func rpcServerRF(f func(ctx SessionContext, rq *rpcRQ, rs *rpcRS) (err error)) f
 		writeRespond := func(body interface{}) {
 			out, err := ctx.NewResponse(in, body, nil)
 			if err != nil {
-				c.Logger().Error3("new rpc respond failed", zap.Error(err))
+				c.Logger().New("rpcRF").Error("new rpc respond failed", zap.Error(err))
 				return
 			}
 			ctx.WritePacket(ctx, out)

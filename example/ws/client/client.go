@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/aggronmagi/walle/net/process"
-	"github.com/aggronmagi/walle/zaplog"
 
 	. "github.com/aggronmagi/walle/net/ws"
 )
@@ -45,7 +44,6 @@ func main() {
 	call("f2")
 
 	n := 10000
-	zaplog.Default.SetLogLevel(zaplog.EMERG)
 
 	callBench := func(uri string) {
 		ctx := context.Background()

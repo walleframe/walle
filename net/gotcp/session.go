@@ -59,7 +59,6 @@ func (sess *GoSession) Write(in []byte) (n int, err error) {
 		return
 	}
 	// sync write
-	log := sess.Process.Opts.Logger
 	sess.mux.Lock()
 	sess.mux.Unlock()
 	if sess.opts.WriteTimeout > 0 {
@@ -67,7 +66,7 @@ func (sess *GoSession) Write(in []byte) (n int, err error) {
 	}
 	n, err = sess.conn.Write(in)
 	if err != nil {
-		log.Error3("write message failed", zap.Error(err))
+		sess.opts.FrameLogger.New("goserver.Write").Error("write message failed", zap.Error(err))
 		return
 	}
 
@@ -111,7 +110,7 @@ func (sess *GoSession) Run() {
 }
 
 func (sess *GoSession) writeLoop() {
-	log := sess.Process.Opts.Logger
+	log := sess.opts.FrameLogger.New("goserver.writeLoop")
 	var err error
 	hb := make([][]byte, 0, 16)
 	hb = append(hb, sess.opts.PacketHeadBuf())
@@ -119,7 +118,7 @@ func (sess *GoSession) writeLoop() {
 	for {
 		select {
 		case <-sess.ctx.Done():
-			for _ = range sess.send {
+			for range sess.send {
 				// TODO drop message notify
 			}
 			return
@@ -130,7 +129,7 @@ func (sess *GoSession) writeLoop() {
 			}
 			err = sess.opts.WriteSize(hb[0], len(data))
 			if err != nil {
-				log.Error3("write message size failed", zap.Error(err))
+				log.Error("write message size failed", zap.Error(err))
 				return
 			}
 			buf := net.Buffers{hb[0], data}
@@ -141,7 +140,7 @@ func (sess *GoSession) writeLoop() {
 				}
 				err = sess.opts.WriteSize(hb[k+1], len(data))
 				if err != nil {
-					log.Error3("write message size failed", zap.Error(err))
+					log.Error("write message size failed", zap.Error(err))
 					return
 				}
 				buf = append(buf, hb[k+1])
@@ -154,9 +153,9 @@ func (sess *GoSession) writeLoop() {
 			_, err = buf.WriteTo(sess.conn)
 			if err != nil {
 				if netErr, ok := err.(net.Error); ok && (netErr.Timeout() || netErr.Temporary()) {
-					// retry
+					// TODO: retry
 				}
-				log.Error3("write data failed", zap.Error(err))
+				log.Error("write data failed", zap.Error(err))
 				return
 			}
 		}
@@ -164,7 +163,7 @@ func (sess *GoSession) writeLoop() {
 }
 
 func (sess *GoSession) readLoop() {
-	log := sess.Process.Opts.Logger
+	log := sess.opts.FrameLogger.New("goserver.readLoop")
 	headSize := len(sess.opts.PacketHeadBuf())
 	buf := make([]byte, sess.opts.ReadBufferSize)
 	bufSize := 0
@@ -180,10 +179,10 @@ func (sess *GoSession) readLoop() {
 				continue
 			}
 			if err == io.EOF {
-				log.Develop8("io.EOF. connect close")
+				log.Warn("io.EOF. connect close")
 				return
 			}
-			log.Error3("read head error", zap.Error(err))
+			log.Error("read head error", zap.Error(err))
 			return
 		}
 		bufSize += read

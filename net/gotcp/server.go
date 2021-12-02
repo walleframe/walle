@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/aggronmagi/walle/net/discovery"
 	"github.com/aggronmagi/walle/net/iface"
 	"github.com/aggronmagi/walle/net/packet"
 	"github.com/aggronmagi/walle/net/process"
@@ -55,8 +56,8 @@ func walleServer() interface{} {
 		"Router": Router(nil),
 		// SessionRouter custom session router
 		"SessionRouter": func(sess Session, global Router) (r Router) { return global },
-		// log interface
-		"Logger": (*zaplog.Logger)(zaplog.Default),
+		// frame log
+		"FrameLogger":(*zaplog.Logger)(zaplog.Frame),
 		// SessionLogger custom session logger
 		"SessionLogger": func(sess Session, global *zaplog.Logger) (r *zaplog.Logger) { return global },
 		// NewSession custom session
@@ -99,6 +100,8 @@ func walleServer() interface{} {
 		"ReuseReadBuffer": false,
 		// MaxMessageSizeLimit limit message size
 		"MaxMessageSizeLimit": int(0),
+		// Registry 
+		"Registry" : discovery.Registry(nil),
 	}
 }
 
@@ -145,7 +148,7 @@ func (s *GoServer) Serve(ln net.Listener) (err error) {
 	if ln != nil {
 		s.ln = ln
 	}
-	return s.runAcceptLoop()
+	return s.runAcceptLoop(context.Background())
 }
 
 func (s *GoServer) Run(addr string) (err error) {
@@ -161,8 +164,22 @@ func (s *GoServer) Run(addr string) (err error) {
 	return s.Serve(s.ln)
 }
 
-func (s *GoServer) runAcceptLoop() (err error) {
+func (s *GoServer) runAcceptLoop(ctx context.Context) (err error) {
 	var tempDelay time.Duration
+	// new registry entry
+	err = s.opts.Registry.NewEntry(ctx, s.ln.Addr())
+	if err != nil {
+		return err
+	}
+	// clean it
+	defer s.opts.Registry.Clean(ctx)
+	// online TODO: 优化online和offline设置
+	err = s.opts.Registry.Online(ctx)
+	if err != nil {
+		return err
+	}
+	defer s.opts.Registry.Offline(ctx)
+	
 	for {
 		conn, err := s.ln.Accept()
 		if err != nil {
@@ -192,11 +209,12 @@ func (s *GoServer) runAcceptLoop() (err error) {
 // serveWs handles websocket requests from the peer.
 func (s *GoServer) accpetConn(conn net.Conn) {
 	// cleanup when exit // cleanup :=
+	log := s.opts.FrameLogger.New("goserver.acceptConn")
 	defer func() {
 		s.acceptLoad.Dec()
 		err := conn.Close()
 		if err != nil {
-			s.opts.Logger.Error3("close session failed", zap.Error(err))
+			log.Error("close session failed", zap.Error(err))
 		}
 	}()
 	// new session
@@ -222,7 +240,7 @@ func (s *GoServer) accpetConn(conn net.Conn) {
 	)
 	// session count limit
 	if s.opts.AcceptLoadLimit(sess, s.acceptLoad.Inc()) {
-		s.opts.Logger.Develop8("session count failed")
+		log.Warn("session count limit")
 		// cleanup()
 		return
 	}
@@ -231,7 +249,7 @@ func (s *GoServer) accpetConn(conn net.Conn) {
 	// maybe cusotm session
 	newSess, err := s.opts.NewSession(sess)
 	if err != nil {
-		s.opts.Logger.Error3("new session failed", zap.Error(err))
+		log.Error("new session failed", zap.Error(err))
 		// cleanup()
 		return
 	}

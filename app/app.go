@@ -45,7 +45,6 @@ func (app *Application) Run() (err error) {
 var WaitStopSignal = func() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGINT, syscall.SIGKILL, syscall.SIGTERM)
-	signal.Reset()
 	<-c
 }
 

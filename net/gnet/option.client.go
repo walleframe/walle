@@ -21,8 +21,8 @@ type ClientOptions struct {
 	ProcessOptions []process.ProcessOption
 	// process router
 	Router Router
-	// log interface
-	Logger (*zaplog.Logger)
+	// frame log
+	FrameLogger (*zaplog.Logger)
 	// AutoReconnect auto reconnect server. zero means not reconnect!
 	AutoReconnectTime int
 	// StopImmediately when session finish,business finish immediately.
@@ -66,12 +66,12 @@ func WithClientOptionsRouter(v Router) ClientOption {
 	}
 }
 
-// log interface
-func WithClientOptionsLogger(v *zaplog.Logger) ClientOption {
+// frame log
+func WithClientOptionsFrameLogger(v *zaplog.Logger) ClientOption {
 	return func(cc *ClientOptions) ClientOption {
-		previous := cc.Logger
-		cc.Logger = v
-		return WithClientOptionsLogger(previous)
+		previous := cc.FrameLogger
+		cc.FrameLogger = v
+		return WithClientOptionsFrameLogger(previous)
 	}
 }
 
@@ -153,7 +153,7 @@ func newDefaultClientOptions() *ClientOptions {
 		Addr:              "localhost:8080",
 		ProcessOptions:    nil,
 		Router:            nil,
-		Logger:            zaplog.Default,
+		FrameLogger:       zaplog.Frame,
 		AutoReconnectTime: 5,
 		StopImmediately:   false,
 		EncodeConfig:      DefaultClientEncodeConfig,

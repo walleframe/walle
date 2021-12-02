@@ -43,39 +43,5 @@ type Context interface {
 	// WithLogFields
 	WithLogFields(fields ...zap.Field)
 	// NewEntry new log entry
-	NewEntry(funcName string) LogEntry
-}
-
-// log context
-type LogEntry interface {
-	// Must must write fields to log
-	Must(fields ...zap.Field)
-	// WhenErr write fields when write error level log
-	WhenErr(fields ...zap.Field)
-	// IfWarn4 if enable warn level,write this fields to log
-	IfWarn4(fields ...zap.Field)
-	// IfInfo5 if enable info level,write this fields to log
-	IfInfo5(fields ...zap.Field)
-	// IfNotice6 if enable notice level,write this fields to log
-	IfNotice6(fields ...zap.Field)
-	// IfDebug7 if enable debug level,write this fields to log
-	IfDebug7(fields ...zap.Field)
-	// IfDevelop8 if enable dev,write this fields to log
-	IfDevelop8(fields ...zap.Field)
-	// Emerg  (emergency): a situation that will cause the host system to be unavailable
-	Emerg0(msg string, fields ...zap.Field)
-	// Alert problems that must be resolved immediately
-	Alert1(msg string, fields ...zap.Field)
-	// CRIT (serious): a more serious situation
-	Crit2(msg string, fields ...zap.Field)
-	Error3(msg string, fields ...zap.Field)
-	// WARNING: events that may affect the function of the system
-	Warn4(msg string, fields ...zap.Field)
-	Info5(msg string, fields ...zap.Field)
-	// NOTICE: will not affect the system but it is worth noting
-	Notice6(msg string, fields ...zap.Field)
-	// Debug7 Flow log, debugging information. Used for program debugging.
-	Debug7(msg string, fields ...zap.Field)
-	// Develop8 Log details. All operation logs, component operation logs
-	Develop8(msg string, fields ...zap.Field)
+	NewEntry(funcName string) *zaplog.LogEntities
 }

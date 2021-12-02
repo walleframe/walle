@@ -13,7 +13,6 @@ import (
 	"github.com/aggronmagi/walle/net/packet"
 	"github.com/aggronmagi/walle/net/process"
 	"github.com/aggronmagi/walle/util"
-	"github.com/aggronmagi/walle/zaplog"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/atomic"
@@ -119,7 +118,7 @@ func rpcServerRF(f func(ctx SessionContext, rq *rpcRQ, rs *rpcRS) (err error)) f
 		writeRespond := func(body interface{}) {
 			out, err := ctx.NewResponse(in, body, nil)
 			if err != nil {
-				c.Logger().Error3("new rpc respond failed", zap.Error(err))
+				c.Logger().New("rpcRF").Error("new rpc respond failed", zap.Error(err))
 				return
 			}
 			ctx.WritePacket(ctx, out)
@@ -254,7 +253,7 @@ func BenchmarkWsClient(b *testing.B) {
 				process.WithCallOptionsTimeout(time.Second),
 			))
 			if err != nil {
-				zaplog.Default.Info5("stop fatal", zap.Error(err))
+				b.Error("stop fatal", err)
 				b.Fatal(k, err)
 			}
 		}

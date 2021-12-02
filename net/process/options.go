@@ -103,7 +103,9 @@ func walleProcessInner() interface{} {
 func walleProcessOption() interface{} {
 	return map[string]interface{}{
 		// log interface
-		"Logger": (*zaplog.Logger)(zaplog.Default),
+		"Logger": (*zaplog.Logger)(zaplog.Logic),
+		// frame log
+		"FrameLogger":(*zaplog.Logger)(zaplog.Frame),
 		// packet pool
 		"PacketPool": packet.PacketPool(packet.DefaultPacketPool),
 		// packet encoder

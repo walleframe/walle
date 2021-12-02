@@ -86,7 +86,7 @@ func TestProcess_OnRead(t *testing.T) {
 		),
 		NewProcessOptions(
 			WithLogger(
-				zaplog.NewLogger(zaplog.DEV, zap.NewNop()),
+				zaplog.NewLogger(zap.NewNop()),
 			),
 			WithDispatchDataFilter(func(data []byte, next PacketDispatcherFunc) (err error) {
 				f.Call("dispatch-before")
@@ -138,7 +138,7 @@ func TestProcess_Call(t *testing.T) {
 		),
 		NewProcessOptions(
 			WithLogger(
-				zaplog.NewLogger(zaplog.DEV, zap.NewNop()),
+				zaplog.NewLogger(zap.NewNop()),
 			),
 			WithDispatchDataFilter(func(data []byte, next PacketDispatcherFunc) (err error) {
 				f.Call("dispatch-before")
@@ -220,7 +220,7 @@ func TestProcess_AsyncCall(t *testing.T) {
 		),
 		NewProcessOptions(
 			WithLogger(
-				zaplog.NewLogger(zaplog.DEV, zap.NewNop()),
+				zaplog.NewLogger(zap.NewNop()),
 			),
 			WithDispatchDataFilter(func(data []byte, next PacketDispatcherFunc) (err error) {
 				f.Call("dispatch-before")
@@ -303,7 +303,7 @@ func TestProcess_Notify(t *testing.T) {
 		),
 		NewProcessOptions(
 			WithLogger(
-				zaplog.NewLogger(zaplog.DEV, zap.NewNop()),
+				zaplog.NewLogger(zap.NewNop()),
 			),
 			WithMsgCodec(MessageCodecJSON),
 		),
@@ -369,7 +369,7 @@ func BenchmarkProcess(b *testing.B) {
 		),
 		NewProcessOptions(
 			WithLogger(
-				zaplog.NewLogger(zaplog.DEV, zap.NewNop()),
+				zaplog.NewLogger(zap.NewNop()),
 			),
 			WithDispatchDataFilter(func(data []byte, next PacketDispatcherFunc) (err error) {
 				err = next(data)

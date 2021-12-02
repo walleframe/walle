@@ -24,8 +24,8 @@ func walleClient() interface{} {
 		"ProcessOptions": []process.ProcessOption{},
 		// process router
 		"Router": Router(nil),
-		// log interface
-		"Logger": (*zaplog.Logger)(zaplog.Default),
+		// frame log
+		"FrameLogger":(*zaplog.Logger)(zaplog.Frame),
 		// AutoReconnect auto reconnect server. zero means not reconnect!
 		"AutoReconnectTime": int(5),
 		// StopImmediately when session finish,business finish immediately.
@@ -93,6 +93,15 @@ func NewClient(opts ...ClientOption) (_ Client, err error) {
 	return NewClientEx(process.NewInnerOptions(), NewClientOptions(opts...))
 }
 
+// NewClientForProxy new client for client proxy.
+// NOTE: you should rewrite this function for custom set option
+func NewClientForProxy(net, addr string, inner *process.InnerOptions) (Client, error) {
+	return NewClientEx(inner, NewClientOptions(
+		WithClientOptionsNetwork(net),
+		WithClientOptionsAddr(addr),
+	))
+}
+
 func (c *GoFrameClient) Write(in []byte) (n int, err error) {
 	if c.close.Load() {
 		err = packet.ErrSessionClosed
@@ -101,7 +110,7 @@ func (c *GoFrameClient) Write(in []byte) (n int, err error) {
 
 	if c.conn == nil {
 		// TODO: 断线重连处理
-		zaplog.Default.Info5("on reconncet")
+		c.opts.FrameLogger.New("gnetclient.Write").Info("on reconncet")
 		return
 	}
 
@@ -122,7 +131,7 @@ func (c *GoFrameClient) Close() (err error) {
 	if !c.close.CAS(false, true) {
 		return
 	}
-	zaplog.Default.Info5("hand close conn")
+	c.opts.FrameLogger.New("gnetclient.Close").Info("hand close conn")
 	close(c.send)
 	// c.cancel()
 	// c.conn.Close()
@@ -148,13 +157,14 @@ func (c *GoFrameClient) writeLoop() {
 }
 
 func (c *GoFrameClient) readLoop() {
+	log := c.opts.FrameLogger.New("gnetclient.readLoop")
 	head := make([]byte, c.opts.DecodeConfig.LengthFieldLength)
 	size := uint32(0)
 	defer c.Close()
 	for {
 		_, err := io.ReadFull(c.conn, head)
 		if err != nil {
-			c.opts.Logger.Error3("read head error", zap.Error(err))
+			log.Error("read head error", zap.Error(err))
 			c.Close()
 			return
 		}
@@ -166,7 +176,7 @@ func (c *GoFrameClient) readLoop() {
 		case 8:
 			size = uint32(c.opts.DecodeConfig.ByteOrder.Uint64(head))
 		default:
-			c.opts.Logger.Error3("invalid head length", zap.Int("l", c.opts.DecodeConfig.LengthFieldLength))
+			log.Error("invalid head length", zap.Int("l", c.opts.DecodeConfig.LengthFieldLength))
 			c.Close()
 			return
 		}
@@ -174,7 +184,7 @@ func (c *GoFrameClient) readLoop() {
 		buf := make([]byte, size)
 		_, err = io.ReadFull(c.conn, buf)
 		if err != nil {
-			c.opts.Logger.Error3("read body error", zap.Error(err))
+			log.Error("read body error", zap.Error(err))
 			c.Close()
 			return
 		}

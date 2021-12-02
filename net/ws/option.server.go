@@ -33,8 +33,8 @@ type ServerOptions struct {
 	Router Router
 	// SessionRouter custom session router
 	SessionRouter func(sess Session, global Router) (r Router)
-	// log interface
-	Logger (*zaplog.Logger)
+	// frame log
+	FrameLogger (*zaplog.Logger)
 	// SessionLogger custom session logger
 	SessionLogger func(sess Session, global *zaplog.Logger) (r *zaplog.Logger)
 	// NewSession custom session
@@ -129,12 +129,12 @@ func WithSessionRouter(v func(sess Session, global Router) (r Router)) ServerOpt
 	}
 }
 
-// log interface
-func WithLogger(v *zaplog.Logger) ServerOption {
+// frame log
+func WithFrameLogger(v *zaplog.Logger) ServerOption {
 	return func(cc *ServerOptions) ServerOption {
-		previous := cc.Logger
-		cc.Logger = v
-		return WithLogger(previous)
+		previous := cc.FrameLogger
+		cc.FrameLogger = v
+		return WithFrameLogger(previous)
 	}
 }
 
@@ -283,7 +283,7 @@ func newDefaultServerOptions() *ServerOptions {
 		SessionRouter: func(sess Session, global Router) (r Router) {
 			return global
 		},
-		Logger: zaplog.Default,
+		FrameLogger: zaplog.Frame,
 		SessionLogger: func(sess Session, global *zaplog.Logger) (r *zaplog.Logger) {
 			return global
 		},

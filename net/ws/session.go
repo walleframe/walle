@@ -7,6 +7,7 @@ import (
 
 	"github.com/aggronmagi/walle/net/packet"
 	"github.com/aggronmagi/walle/net/process"
+	"github.com/aggronmagi/walle/zaplog"
 	"github.com/gorilla/websocket"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
@@ -32,6 +33,8 @@ type WsSession struct {
 	opts        *ServerOptions
 	// close call back
 	closeChain []func(Session)
+	//
+	logger *zaplog.Logger
 }
 
 func (sess *WsSession) Write(in []byte) (n int, err error) {
@@ -54,7 +57,6 @@ func (sess *WsSession) Write(in []byte) (n int, err error) {
 		return
 	}
 	// sync write
-	log := sess.Process.Opts.Logger
 	n = len(in)
 	// websocket write
 	sess.mux.Lock()
@@ -64,7 +66,7 @@ func (sess *WsSession) Write(in []byte) (n int, err error) {
 	}
 	err = sess.conn.WriteMessage(websocket.BinaryMessage, in)
 	if err != nil {
-		log.Error3("write message failed", zap.Error(err))
+		sess.logger.New("ws.Write").Error("write message failed", zap.Error(err))
 		return
 	}
 
@@ -109,7 +111,7 @@ func (sess *WsSession) Run() {
 
 func (sess *WsSession) writeLoop() {
 	defer sess.Close()
-	log := sess.Process.Opts.Logger
+	log := sess.logger.New("ws.writeLoop")
 	tmpChan := make(chan time.Time)
 	defer close(tmpChan)
 	tickerChan := (<-chan time.Time)(tmpChan)
@@ -136,7 +138,7 @@ func (sess *WsSession) writeLoop() {
 			}
 			err := sess.conn.WriteMessage(websocket.BinaryMessage, data)
 			if err != nil {
-				log.Error3("write message failed", zap.Error(err))
+				log.Error("write message failed", zap.Error(err))
 				return
 			}
 		case <-tickerChan:
@@ -152,7 +154,7 @@ func (sess *WsSession) writeLoop() {
 
 func (sess *WsSession) readLoop() {
 	defer sess.Close()
-	log := sess.Process.Opts.Logger
+	log := sess.logger.New("ws.readLoop")
 	if sess.svr != nil {
 		if sess.opts.Heartbeat > 0 {
 			// FIXME: time set
@@ -177,14 +179,14 @@ func (sess *WsSession) readLoop() {
 			if websocket.IsUnexpectedCloseError(err,
 				websocket.CloseGoingAway,
 				websocket.CloseAbnormalClosure) {
-				log.Error3("read error", zap.Error(err))
+				log.Error("read error", zap.Error(err))
 			}
-			log.Develop8("recv read error", zap.Error(err), zap.Bool("svr", sess.svr != nil))
+			log.Warn("recv read error", zap.Error(err), zap.Bool("svr", sess.svr != nil))
 			return
 		}
 		err = sess.OnRead(data)
 		if err != nil {
-			log.Develop8("deal message failed", zap.Error(err))
+			log.Warn("deal message failed", zap.Error(err))
 		}
 	}
 }

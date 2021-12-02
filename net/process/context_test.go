@@ -5,9 +5,7 @@ import (
 	"testing"
 
 	"github.com/aggronmagi/walle/internal/util/test"
-	zaplog "github.com/aggronmagi/walle/zaplog"
 	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/assert"
 	zap "go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -76,78 +74,4 @@ func (c *testLogCore) Write(ent zapcore.Entry, fs []zapcore.Field) error {
 }
 func (*testLogCore) Sync() error {
 	return nil
-}
-
-func TestContext_Logger(t *testing.T) {
-	mc := gomock.NewController(t)
-	tf := test.NewMockFuncCall(mc)
-
-	notifyCore := &testLogCore{}
-	log := zaplog.NewLogger(zaplog.DEV, zap.New(notifyCore))
-	ctx := &wrapContext{
-		log: log,
-	}
-
-	fc := zap.Int("value", 1)
-
-	// Normal
-	tf.EXPECT().Call(fc)
-	notifyCore.notify = func(ent zapcore.Entry, fields []zap.Field) {
-		assert.EqualValues(t, "msg", ent.Message, "compare msg")
-		assert.Equal(t, len(fields), int(3), "compare size")
-		assert.Equal(t, zaplog.ZapLevelFieldDev, fields[0], "compare fields value")
-		assert.Equal(t, "fname", fields[1].Key, "fname key check")
-		assert.Equal(t, fc, fields[2], "compare fields value")
-		tf.Call(fields[2])
-	}
-
-	le := ctx.NewEntry("funcName")
-	le.Develop8("msg", fc)
-
-	// If[Level]
-	log.SetLogLevel(zaplog.DEBUG)
-	tf.EXPECT().Call()
-	notifyCore.notify = func(ent zapcore.Entry, fields []zap.Field) {
-		assert.EqualValues(t, "msg", ent.Message, "compare msg")
-		assert.Equal(t, len(fields), int(2), "compare size")
-		assert.Equal(t, zaplog.ZapLevelFieldDebug, fields[0], "compare fields value")
-		assert.Equal(t, "fname", fields[1].Key, "fname key check")
-		//assert.Equal(t, fc, fields[2], "compare fields value")
-		tf.Call()
-	}
-
-	le = ctx.NewEntry("funcName")
-	le.IfDevelop8(fc)
-	le.Debug7("msg")
-
-	// WhenError 1
-	log.SetLogLevel(zaplog.DEBUG)
-	tf.EXPECT().Call()
-	notifyCore.notify = func(ent zapcore.Entry, fields []zap.Field) {
-		assert.EqualValues(t, "msg", ent.Message, "compare msg")
-		assert.Equal(t, len(fields), int(2), "compare size")
-		assert.Equal(t, zaplog.ZapLevelFieldDebug, fields[0], "compare fields value")
-		assert.Equal(t, "fname", fields[1].Key, "fname key check")
-		//assert.Equal(t, fc, fields[2], "compare fields value")
-		tf.Call()
-	}
-
-	le = ctx.NewEntry("funcName")
-	le.WhenErr(fc)
-	le.Debug7("msg")
-
-	// WhenError 2
-	tf.EXPECT().Call()
-	notifyCore.notify = func(ent zapcore.Entry, fields []zap.Field) {
-		assert.EqualValues(t, "msg", ent.Message, "compare msg")
-		assert.Equal(t, len(fields), int(3), "compare size")
-		assert.Equal(t, zaplog.ZapLevelFieldErr, fields[0], "compare fields value")
-		assert.Equal(t, "fname", fields[1].Key, "fname key check")
-		assert.Equal(t, fc, fields[2], "compare fields value")
-		tf.Call()
-	}
-
-	le = ctx.NewEntry("funcName")
-	le.WhenErr(fc)
-	le.Error3("msg")
 }

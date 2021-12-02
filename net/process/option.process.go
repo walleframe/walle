@@ -15,6 +15,8 @@ var _ = walleProcessOption()
 type ProcessOptions struct {
 	// log interface
 	Logger (*zaplog.Logger)
+	// frame log
+	FrameLogger (*zaplog.Logger)
 	// packet pool
 	PacketPool packet.PacketPool
 	// packet encoder
@@ -35,6 +37,15 @@ func WithLogger(v *zaplog.Logger) ProcessOption {
 		previous := cc.Logger
 		cc.Logger = v
 		return WithLogger(previous)
+	}
+}
+
+// frame log
+func WithFrameLogger(v *zaplog.Logger) ProcessOption {
+	return func(cc *ProcessOptions) ProcessOption {
+		previous := cc.FrameLogger
+		cc.FrameLogger = v
+		return WithFrameLogger(previous)
 	}
 }
 
@@ -134,7 +145,8 @@ var watchDogProcessOptions func(cc *ProcessOptions)
 // newDefaultProcessOptions new option with default value
 func newDefaultProcessOptions() *ProcessOptions {
 	cc := &ProcessOptions{
-		Logger:             zaplog.Default,
+		Logger:             zaplog.Logic,
+		FrameLogger:        zaplog.Frame,
 		PacketPool:         packet.DefaultPacketPool,
 		PacketEncode:       &EmtpyPacketCoder{},
 		PacketCodec:        PacketCodecProtobuf,

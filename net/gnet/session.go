@@ -35,7 +35,6 @@ func (sess *GNetSession) Write(in []byte) (n int, err error) {
 	}
 
 	// write msg
-	log := sess.Process.Opts.Logger
 	n = len(in)
 	if sess.udp {
 		err = sess.conn.SendTo(in)
@@ -43,7 +42,7 @@ func (sess *GNetSession) Write(in []byte) (n int, err error) {
 		err = sess.conn.AsyncWrite(in)
 	}
 	if err != nil {
-		log.Error3("write message failed", zap.Error(err))
+		sess.Opts.FrameLogger.New("gnetsesson.Write").Error("write message failed", zap.Error(err))
 		return
 	}
 

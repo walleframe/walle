@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 
 	"github.com/aggronmagi/walle/net/packet"
-	"github.com/golang/protobuf/proto"
+	// "github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 )
 
 // Codec use for marshal and unmarshal message

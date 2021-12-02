@@ -53,8 +53,8 @@ func walleServer() interface{} {
 		"Router": Router(nil),
 		// SessionRouter custom session router
 		"SessionRouter": func(sess Session, global Router) (r Router) { return global },
-		// log interface
-		"Logger": (*zaplog.Logger)(zaplog.Default),
+		// frame log
+		"FrameLogger":(*zaplog.Logger)(zaplog.Frame),
 		// SessionLogger custom session logger
 		"SessionLogger": func(sess Session, global *zaplog.Logger) (r *zaplog.Logger) { return global },
 		// NewSession custom session
@@ -121,10 +121,11 @@ func (s *WsServer) Run(addr string) (err error) {
 
 // serveWs handles websocket requests from the peer.
 func (s *WsServer) HttpServeWs(w http.ResponseWriter, r *http.Request) {
+	log := s.opts.FrameLogger.New("ws.HttpServeWs").ResetTime()
 	// upgrade websocket
 	conn, err := DefaultUpgrade.Upgrade(w, r, nil)
 	if err != nil {
-		s.opts.Logger.Error3("upgrade websocket failed", zap.Error(err))
+		log.Error("upgrade websocket failed", zap.Error(err))
 		s.opts.UpgradeFail(w, r, err)
 		return
 	}
@@ -133,7 +134,7 @@ func (s *WsServer) HttpServeWs(w http.ResponseWriter, r *http.Request) {
 		s.acceptLoad.Dec()
 		err := conn.Close()
 		if err != nil {
-			s.opts.Logger.Error3("close session failed", zap.Error(err))
+			log.Error("close session failed", zap.Error(err))
 		}
 	}()
 	// new session
@@ -151,6 +152,7 @@ func (s *WsServer) HttpServeWs(w http.ResponseWriter, r *http.Request) {
 		),
 		ctx:    context.Background(),
 		cancel: func() {},
+		logger: s.opts.FrameLogger,
 	}
 	sess.opts = s.opts
 	sess.Process.Inner.ApplyOption(
@@ -159,14 +161,14 @@ func (s *WsServer) HttpServeWs(w http.ResponseWriter, r *http.Request) {
 	)
 	// session count limit
 	if s.opts.AcceptLoadLimit(sess, s.acceptLoad.Inc()) {
-		s.opts.Logger.Develop8("websocket session count failed", zap.Error(err))
+		log.Warn("websocket session count limit", zap.Error(err))
 		// cleanup()
 		return
 	}
 	// maybe cusotm session
 	newSess, err := s.opts.NewSession(sess, r)
 	if err != nil {
-		s.opts.Logger.Error3("new session failed", zap.Error(err))
+		log.Error("new session failed", zap.Error(err))
 		// cleanup()
 		return
 	}
@@ -188,6 +190,7 @@ func (s *WsServer) HttpServeWs(w http.ResponseWriter, r *http.Request) {
 	sess.Process.Opts.ApplyOption(
 		process.WithLogger(s.opts.SessionLogger(newSess, sess.Process.Opts.Logger)),
 	)
+	log.ClearTime()
 	// cleanup map
 	defer func() {
 		s.mux.Lock()

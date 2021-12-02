@@ -32,10 +32,10 @@ func walleClient() interface{} {
 		"ProcessOptions": []process.ProcessOption{},
 		// process router
 		"Router": Router(nil),
-		// log interface
-		"Logger": (*zaplog.Logger)(zaplog.Default),
-		// AutoReconnect auto reconnect server. zero means not reconnect!
-		"AutoReconnectTime": int(5),
+		// frame log
+		"FrameLogger": (*zaplog.Logger)(zaplog.Frame),
+		// AutoReconnect auto reconnect server. zero means not reconnect! -1 means always reconnect, >0 : reconnect times
+		"AutoReconnectTime": int(-1),
 		// AutoReconnectWait reconnect wait time
 		"AutoReconnectWait": time.Duration(time.Millisecond * 500),
 		// StopImmediately when session finish,business finish immediately.
@@ -76,6 +76,8 @@ func walleClient() interface{} {
 		"ReuseReadBuffer": false,
 		// MaxMessageSizeLimit limit message size
 		"MaxMessageSizeLimit": int(0),
+		// BlockConnect 创建客户端时候，是否阻塞等待链接服务器
+		"BlockConnect": true,
 	}
 }
 
@@ -133,10 +135,12 @@ func NewClientEx(inner *process.InnerOptions, copts *ClientOptions) (cli *GoClie
 		cli.ctx, cli.cancel = context.WithCancel(context.Background())
 	}
 
-	// connect to server
-	cli.conn, err = copts.Dialer(copts.Network, copts.Addr)
-	if err != nil {
-		return
+	// block connect to server
+	if copts.BlockConnect {
+		cli.conn, err = copts.Dialer(copts.Network, copts.Addr)
+		if err != nil {
+			return
+		}
 	}
 
 	go cli.Run()
@@ -147,10 +151,24 @@ func NewClient(opts ...ClientOption) (_ Client, err error) {
 	return NewClientEx(process.NewInnerOptions(), NewClientOptions(opts...))
 }
 
+// NewClientForProxy new client for client proxy.
+// NOTE: you should rewrite this function for custom set option
+func NewClientForProxy(net, addr string, inner *process.InnerOptions) (Client, error) {
+	return NewClientEx(inner, NewClientOptions(
+		WithClientOptionsNetwork(net),
+		WithClientOptionsAddr(addr),
+	))
+}
+
+func (sess *GoClient) logger(fname string) *zaplog.LogEntities {
+	return sess.opts.FrameLogger.New(fname)
+}
+
 func (sess *GoClient) Write(in []byte) (n int, err error) {
-	log := sess.Process.Opts.Logger
+	log := sess.logger("goclient.Write")
 	if len(in) >= sess.opts.MaxMessageSizeLimit {
 		err = packet.ErrPacketTooLarge
+		log.Error("write msg too big", zap.Int("size", len(in)), zap.Int("limit", sess.opts.MaxMessageSizeLimit))
 		return
 	}
 	// select {
@@ -162,7 +180,7 @@ func (sess *GoClient) Write(in []byte) (n int, err error) {
 	// }
 
 	if sess.close.Load() || sess.reconn.Load() {
-		log.Error3("client closed")
+		log.Warn("client closed")
 		err = packet.ErrSessionClosed
 		return
 	}
@@ -180,7 +198,7 @@ func (sess *GoClient) Write(in []byte) (n int, err error) {
 	}
 	n, err = sess.conn.Write(in)
 	if err != nil {
-		log.Error3("write message failed", zap.Error(err))
+		log.Error("write message failed", zap.Error(err))
 		return
 	}
 
@@ -206,9 +224,15 @@ func (sess *GoClient) GetConn() interface{} {
 
 // Run run client
 func (sess *GoClient) Run() {
-	log := sess.opts.Logger
+	log := sess.logger("goclient.Run")
+
+	// conn
+	if !sess.opts.BlockConnect && !sess.reconnLoop() {
+		return
+	}
+
 	for {
-		reconnectTimeLimit := sess.opts.AutoReconnectTime
+
 		wg := sync.WaitGroup{}
 		// async write
 		if sess.opts.WriteMethods == WriteAsync {
@@ -223,52 +247,83 @@ func (sess *GoClient) Run() {
 		wg.Wait()
 
 		sess.Process.Clean()
-		// enable reconnect server
-		if reconnectTimeLimit == 0 {
-			break
-		}
+		// closed
 		if sess.close.Load() {
 			break
 		}
-		sess.conn.Close()
-		sess.conn = nil
-		sess.reconn.Store(true)
-		for k := 0; k < reconnectTimeLimit; k++ {
-			time.Sleep(sess.opts.AutoReconnectWait)
-			if sess.close.Load() {
-				break
-			}
-			conn, err := sess.opts.Dialer(sess.opts.Network, sess.opts.Addr)
-			if err != nil {
-				log.Error3("reconnect server failed",
-					zap.String("network", sess.opts.Network),
-					zap.String("addr", sess.opts.Addr),
-					zap.Error(err),
-				)
-				continue
-			}
-			sess.conn = conn
-		}
-		sess.reconn.Store(false)
-		// check
-		if sess.close.Load() {
-			if sess.conn != nil {
-				sess.conn.Close()
-			}
-			break
-		}
-		if sess.conn == nil {
+		// 重连失败
+		if !sess.reconnLoop() {
 			break
 		}
 	}
 	for _, ntf := range sess.closeChain {
 		ntf(sess)
 	}
-	log.Develop8("connect closed")
+	log.Debug("connect closed")
+}
+
+func (sess *GoClient) reconnLoop() (ok bool) {
+	log := sess.logger("goclient.reconnLoop")
+	if sess.opts.AutoReconnectTime == 0 {
+		log.Debug("disable reconnect")
+		return
+	}
+
+	if sess.close.Load() {
+		log.Debug("client has closed")
+		return
+	}
+
+	if sess.conn != nil {
+		sess.conn.Close()
+	}
+	sess.conn = nil
+	sess.reconn.Store(true)
+	reconnectTimeLimit := sess.opts.AutoReconnectTime
+	index := 0
+	for {
+		// connect to server
+		conn, err := sess.opts.Dialer(sess.opts.Network, sess.opts.Addr)
+		if err == nil {
+			sess.conn = conn
+			break
+		}
+
+		log.Error("reconnect server failed",
+			zap.String("network", sess.opts.Network),
+			zap.String("addr", sess.opts.Addr),
+			zap.Error(err),
+		)
+		if sess.close.Load() {
+			log.Debug("client has closed")
+			return
+		}
+		time.Sleep(sess.opts.AutoReconnectWait)
+		if sess.close.Load() {
+			log.Debug("client has closed")
+			return
+		}
+		index++
+		if reconnectTimeLimit > 0 && index >= reconnectTimeLimit {
+			log.Warn("reconn failed")
+			break
+		}
+	}
+
+	sess.reconn.Store(false)
+	// check
+	if sess.close.Load() {
+		if sess.conn != nil {
+			sess.conn.Close()
+			sess.conn = nil 
+		}
+		return
+	}
+	return sess.conn != nil
 }
 
 func (sess *GoClient) writeLoop() {
-	log := sess.Process.Opts.Logger
+	log := sess.logger("goclient.writeLoop")
 	var err error
 	hb := make([][]byte, 0, 16)
 	hb = append(hb, sess.opts.PacketHeadBuf())
@@ -276,7 +331,7 @@ func (sess *GoClient) writeLoop() {
 	for {
 		select {
 		case <-sess.ctx.Done():
-			for _ = range sess.send {
+			for range sess.send {
 				// TODO drop message notify
 			}
 			return
@@ -287,7 +342,7 @@ func (sess *GoClient) writeLoop() {
 			}
 			err = sess.opts.WriteSize(hb[0], len(data))
 			if err != nil {
-				log.Error3("write message size failed", zap.Error(err))
+				log.Error("write message size failed", zap.Error(err))
 				return
 			}
 			buf := net.Buffers{hb[0], data}
@@ -298,7 +353,7 @@ func (sess *GoClient) writeLoop() {
 				}
 				err = sess.opts.WriteSize(hb[k+1], len(data))
 				if err != nil {
-					log.Error3("write message size failed", zap.Error(err))
+					log.Error("write message size failed", zap.Error(err))
 					return
 				}
 				buf = append(buf, hb[k+1])
@@ -313,7 +368,7 @@ func (sess *GoClient) writeLoop() {
 				if netErr, ok := err.(net.Error); ok && (netErr.Timeout() || netErr.Temporary()) {
 					// retry
 				}
-				log.Error3("write data failed", zap.Error(err))
+				log.Error("write data failed", zap.Error(err))
 				return
 			}
 		}
@@ -321,7 +376,7 @@ func (sess *GoClient) writeLoop() {
 }
 
 func (sess *GoClient) readLoop() {
-	log := sess.Process.Opts.Logger
+	log := sess.logger("goclient.readLoop")
 	headSize := len(sess.opts.PacketHeadBuf())
 	buf := make([]byte, sess.opts.ReadBufferSize)
 	bufSize := 0
@@ -337,10 +392,10 @@ func (sess *GoClient) readLoop() {
 				continue
 			}
 			if err == io.EOF {
-				log.Develop8("io.EOF. connect close")
+				log.Debug("io.EOF. connect close")
 				return
 			}
-			log.Error3("read head error", zap.Error(err))
+			log.Error("read head error", zap.Error(err))
 			return
 		}
 		bufSize += read
@@ -352,7 +407,7 @@ func (sess *GoClient) readLoop() {
 			}
 			size := sess.opts.ReadSize(buf[:headSize])
 			if size > sess.opts.MaxMessageSizeLimit {
-				log.Error3("invalid packet", zap.Int("size", size))
+				log.Error("invalid packet", zap.Int("size", size))
 				return
 			}
 			if bufSize < size+headSize {

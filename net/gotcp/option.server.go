@@ -10,6 +10,7 @@ import (
 	net "net"
 	time "time"
 
+	discovery "github.com/aggronmagi/walle/net/discovery"
 	packet "github.com/aggronmagi/walle/net/packet"
 	process "github.com/aggronmagi/walle/net/process"
 	zaplog "github.com/aggronmagi/walle/zaplog"
@@ -33,8 +34,8 @@ type ServerOptions struct {
 	Router Router
 	// SessionRouter custom session router
 	SessionRouter func(sess Session, global Router) (r Router)
-	// log interface
-	Logger (*zaplog.Logger)
+	// frame log
+	FrameLogger (*zaplog.Logger)
 	// SessionLogger custom session logger
 	SessionLogger func(sess Session, global *zaplog.Logger) (r *zaplog.Logger)
 	// NewSession custom session
@@ -66,6 +67,8 @@ type ServerOptions struct {
 	ReuseReadBuffer bool
 	// MaxMessageSizeLimit limit message size
 	MaxMessageSizeLimit int
+	// Registry
+	Registry discovery.Registry
 }
 
 // Addr Server Addr
@@ -131,12 +134,12 @@ func WithSessionRouter(v func(sess Session, global Router) (r Router)) ServerOpt
 	}
 }
 
-// log interface
-func WithLogger(v *zaplog.Logger) ServerOption {
+// frame log
+func WithFrameLogger(v *zaplog.Logger) ServerOption {
 	return func(cc *ServerOptions) ServerOption {
-		previous := cc.Logger
-		cc.Logger = v
-		return WithLogger(previous)
+		previous := cc.FrameLogger
+		cc.FrameLogger = v
+		return WithFrameLogger(previous)
 	}
 }
 
@@ -269,6 +272,15 @@ func WithMaxMessageSizeLimit(v int) ServerOption {
 	}
 }
 
+// Registry
+func WithRegistry(v discovery.Registry) ServerOption {
+	return func(cc *ServerOptions) ServerOption {
+		previous := cc.Registry
+		cc.Registry = v
+		return WithRegistry(previous)
+	}
+}
+
 // SetOption modify options
 func (cc *ServerOptions) SetOption(opt ServerOption) {
 	_ = opt(cc)
@@ -325,7 +337,7 @@ func newDefaultServerOptions() *ServerOptions {
 		SessionRouter: func(sess Session, global Router) (r Router) {
 			return global
 		},
-		Logger: zaplog.Default,
+		FrameLogger: zaplog.Frame,
 		SessionLogger: func(sess Session, global *zaplog.Logger) (r *zaplog.Logger) {
 			return global
 		},
@@ -355,6 +367,7 @@ func newDefaultServerOptions() *ServerOptions {
 		ReadBufferSize:      65535,
 		ReuseReadBuffer:     false,
 		MaxMessageSizeLimit: 0,
+		Registry:            nil,
 	}
 	return cc
 }

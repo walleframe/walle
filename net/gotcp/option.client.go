@@ -29,9 +29,9 @@ type ClientOptions struct {
 	ProcessOptions []process.ProcessOption
 	// process router
 	Router Router
-	// log interface
-	Logger (*zaplog.Logger)
-	// AutoReconnect auto reconnect server. zero means not reconnect!
+	// frame log
+	FrameLogger (*zaplog.Logger)
+	// AutoReconnect auto reconnect server. zero means not reconnect! -1 means always reconnect, >0 : reconnect times
 	AutoReconnectTime int
 	// AutoReconnectWait reconnect wait time
 	AutoReconnectWait time.Duration
@@ -62,6 +62,8 @@ type ClientOptions struct {
 	ReuseReadBuffer bool
 	// MaxMessageSizeLimit limit message size
 	MaxMessageSizeLimit int
+	// BlockConnect 创建客户端时候，是否阻塞等待链接服务器
+	BlockConnect bool
 }
 
 // Network tcp/tcp4/tcp6/unix
@@ -109,16 +111,16 @@ func WithClientOptionsRouter(v Router) ClientOption {
 	}
 }
 
-// log interface
-func WithClientOptionsLogger(v *zaplog.Logger) ClientOption {
+// frame log
+func WithClientOptionsFrameLogger(v *zaplog.Logger) ClientOption {
 	return func(cc *ClientOptions) ClientOption {
-		previous := cc.Logger
-		cc.Logger = v
-		return WithClientOptionsLogger(previous)
+		previous := cc.FrameLogger
+		cc.FrameLogger = v
+		return WithClientOptionsFrameLogger(previous)
 	}
 }
 
-// AutoReconnect auto reconnect server. zero means not reconnect!
+// AutoReconnect auto reconnect server. zero means not reconnect! -1 means always reconnect, >0 : reconnect times
 func WithClientOptionsAutoReconnectTime(v int) ClientOption {
 	return func(cc *ClientOptions) ClientOption {
 		previous := cc.AutoReconnectTime
@@ -247,6 +249,15 @@ func WithClientOptionsMaxMessageSizeLimit(v int) ClientOption {
 	}
 }
 
+// BlockConnect 创建客户端时候，是否阻塞等待链接服务器
+func WithClientOptionsBlockConnect(v bool) ClientOption {
+	return func(cc *ClientOptions) ClientOption {
+		previous := cc.BlockConnect
+		cc.BlockConnect = v
+		return WithClientOptionsBlockConnect(previous)
+	}
+}
+
 // SetOption modify options
 func (cc *ClientOptions) SetOption(opt ClientOption) {
 	_ = opt(cc)
@@ -296,8 +307,8 @@ func newDefaultClientOptions() *ClientOptions {
 		},
 		ProcessOptions:    nil,
 		Router:            nil,
-		Logger:            zaplog.Default,
-		AutoReconnectTime: 5,
+		FrameLogger:       zaplog.Frame,
+		AutoReconnectTime: -1,
 		AutoReconnectWait: time.Millisecond * 500,
 		StopImmediately:   false,
 		ReadTimeout:       0,
@@ -322,6 +333,7 @@ func newDefaultClientOptions() *ClientOptions {
 		ReadBufferSize:      65535,
 		ReuseReadBuffer:     false,
 		MaxMessageSizeLimit: 0,
+		BlockConnect:        true,
 	}
 	return cc
 }

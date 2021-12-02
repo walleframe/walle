@@ -32,63 +32,13 @@ func (*testLogCore) Sync() error {
 	return nil
 }
 
-func TestLogger_New_1(t *testing.T) {
-	tf := test.NewMockFuncCall(gomock.NewController(t))
-	tf.EXPECT().Call()
-	notifyCore := &testLogCore{}
-	log := NewLogger(DEV, zap.New(notifyCore))
-	fc := zap.Int("value", 1)
-	notifyCore.notify = func(ent zapcore.Entry, fields []zap.Field) {
-		assert.EqualValues(t, "msg", ent.Message, "compare msg")
-		assert.Equal(t, len(fields), int(1), "compare size")
-		assert.Equal(t, fc, fields[0], "compare fields value")
-		tf.Call()
-	}
-	log.Develop8("msg", fc)
-}
 
-func TestLogger_New_2(t *testing.T) {
-	tf := test.NewMockFuncCall(gomock.NewController(t))
-	tf.EXPECT().Call()
-	notifyCore := &testLogCore{}
-	log, err := NewLoggerWithCfg(DEV, zap.NewDevelopmentConfig(),
-		zap.WrapCore(func(c zapcore.Core) zapcore.Core {
-			return notifyCore
-		}),
-	)
-	assert.Nil(t, err, "create logger")
-	fc := zap.Int("value", 1)
-	notifyCore.notify = func(ent zapcore.Entry, fields []zap.Field) {
-		assert.EqualValues(t, "msg", ent.Message, "compare msg")
-		assert.Equal(t, len(fields), int(1), "compare size")
-		assert.Equal(t, fc, fields[0], "compare fields value")
-		tf.Call()
-	}
-	log.Develop8("msg", fc)
-}
-
-func TestLogger_Level(t *testing.T) {
-	notifyCore := &testLogCore{}
-	log := NewLogger(DEV, zap.New(notifyCore))
-	for lv := EMERG; lv <= DEV; lv++ {
-		log.SetLogLevel(lv)
-		for c := EMERG; c <= DEV; c++ {
-			assert.Equal(t, c <= lv, log.Enabled(c), "log level check")
-		}
-	}
-}
-
-func GetLogFuncs(log *Logger) (arr []func(msg string, fields ...zap.Field)) {
+func GetLogFuncs(log *LogEntities) (arr []func(msg string, fields ...zap.Field)) {
 	arr = append(arr,
-		log.Emerg0,
-		log.Alert1,
-		log.Crit2,
-		log.Error3,
-		log.Warn4,
-		log.Info5,
-		log.Notice6,
-		log.Debug7,
-		log.Develop8,
+		log.Debug,
+		log.Info,
+		log.Warn,
+		log.Error,
 	)
 	return
 }
@@ -96,10 +46,11 @@ func GetLogFuncs(log *Logger) (arr []func(msg string, fields ...zap.Field)) {
 func TestLogger_Write(t *testing.T) {
 
 	notifyCore := &testLogCore{}
-	log := NewLogger(DEV, zap.New(notifyCore))
+	log := NewLogger(zap.New(notifyCore))
 
-	lfs := GetLogFuncs(log)
+	lfs := GetLogFuncs(log.New("test"))
 	fc := zap.Int("value", 1)
+	ff := zap.String("func", "test")
 	for k, w := range lfs {
 		t.Run(fmt.Sprintf("level-%d", k), func(t *testing.T) {
 			mc := gomock.NewController(t)
@@ -108,7 +59,8 @@ func TestLogger_Write(t *testing.T) {
 			tf.EXPECT().Call()
 			notifyCore.notify = func(ent zapcore.Entry, fields []zap.Field) {
 				assert.EqualValues(t, "msg", ent.Message, "compare msg")
-				assert.Equal(t, len(fields), int(1), "compare size")
+				assert.Equal(t, len(fields), int(2), "compare size")
+				assert.EqualValues(t, ff, fields[1], "compare func fields")
 				assert.Equal(t, fc, fields[0], "compare fields value")
 				tf.Call()
 			}

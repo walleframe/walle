@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/aggronmagi/walle/net/process"
-	"github.com/aggronmagi/walle/zaplog"
 	"go.uber.org/atomic"
 
 	. "github.com/aggronmagi/walle/net/gotcp"
@@ -57,7 +56,6 @@ func main() {
 	// call("f1")
 
 	n := 10000
-	zaplog.Default.SetLogLevel(zaplog.EMERG)
 
 	// func() {
 	// 	start := time.Now()
