@@ -1,4 +1,4 @@
-#+startup: content
+#+startup: showall
 #+title: walle
 
 walle目标灵活配置. 高性能的服务框架.开发中...
@@ -7,9 +7,27 @@ walle目标灵活配置. 高性能的服务框架.开发中...
 #+end_quote
 
 * 开发依赖工具
+ - protoc 需要手动安装
 #+begin_src shell
-go install github.com/aggronmagi/gogen@latest
+# mock接口生成
 go install github.com/golang/mock/mockgen@v1.6.0
+# 代码生成(option,string,struct => interface)
+go install github.com/aggronmagi/gogen@latest
+# protobuf 生成go代码 使用gogofaster
+# go install github.com/golang/protobuf/protoc-gen-go@latest
+go install github.com/gogo/protobuf/protoc-gen-gogofaster@latest
+# walle 命令行工具(解析wproto,excel等)
+go install github.com/aggronmagi/wctl@latest
+# wctl插件 wproto => protobuf 格式转换
+go install github.com/aggronmagi/wplugins/cmd/toproto@latest
+# wctl插件 生成rpc代码
+go install github.com/aggronmagi/wplugins/cmd/wrpc@lates
+# wctl插件 为pb结构体生成zap日志文件
+go install github.com/aggronmagi/wplugins/cmd/wzap@latest
+# wctl插件 redis代码
+# wctl插件 mysql代码
+# wctl插件 excel代码
+# wctl插件 项目代码
 #+end_src
 * 进度
 ** DONE 网络层支持以下接口
@@ -31,6 +49,54 @@ go install github.com/golang/mock/mockgen@v1.6.0
 ** TODO 优化
  - [X] 客户端链接允许不直接建立链接
  - [ ] packet包 独立，不直接使用pb消息（兼容其他格式，比如sproto）
+** TODO 需要调整
+TCPServer等，应该提供注册接口，而不是让外部直接去设置Router，每种设置，提供全局的默认值修改机制。
+* 代码约定
+* 组件替换
+** Codec接口约定
+*所有Codec接口Marshal返回的内存，都应该是mempool.Pool()中申请的。*
+
+此约定主要想减少内存拷贝。
+
+~metadata~ 的 ~Codec.Marshal~ 申请的内存，在函数调用处进行Free.
+~message~ 的 ~Codec.Marshal~ 申请的内存，在 ~packet.Pool.Put~ 处释放。
+~packet~ 的 ~Codec.Marshal~ 申请的内存，在 ~packet.Pool.Put~ 处释放。
+~errcode~ 的 ~Codec.Marshal~ 申请的内存，和 ~message~ 一样。
+** 错误
+packege ~errcode~ 用于定义框架中使用的错误结构体。
+
+ ~ErrorResponse~ 不仅仅用于进程内表示错误，还用于网络请求中传递错误。
+
+可以通过实现 ~ErrorCodec~ ， ~ErrorsNew~ 接口来替换内部错误的实现.
+实现之后替换 ~DefaultErrorCodec~ 及 ~DefaultErrorsNew~ 即可。
+这两个接口都是全局的。
+** 网络包 packet
+#+begin_src go
+// Pool reuse packet pool
+type Pool interface {
+	Get() interface{}
+	Put(interface{})
+}
+
+// Codec Use for marshal/unmarshal packet.Packet from bytes
+type Codec interface {
+	Marshal(p interface{}) ([]byte, error)
+	Unmarshal(data []byte, p interface{}) error
+}
+
+// ProtocolWraper wrap all packet operate, use for custom packet struct.
+type ProtocolWraper interface {
+	// unmarshal packet's payload by msg codec
+	PayloadUnmarshal(pkg interface{}, codec message.Codec, obj interface{}) error
+	// marshal packet's payload by msg codec,then set payload binary data into message buf.
+	PayloadMarshal(pkg interface{}, codec message.Codec, payload interface{}) (err error)
+	// new response packet
+	NewResponse(inPkg, outPkg interface{}, md metadata.MD) (err error)
+	// new request packet
+	NewPacket(inPkg interface{}, cmd PacketCmd, uri interface{}, md metadata.MD) (err error)
+}
+#+end_src
+
 * 网络层
 [[./doc/network.org][网络层详细文档]]
 

@@ -1,0 +1,71 @@
+package wpb
+
+proto.gopkg = "github.com/aggronmagi/walle/testpkg/wpb"
+
+// test message
+message test_msg
+{
+	// int value
+	int32 v1 = 1;
+	// string value
+	string v2 = 2;
+}
+	
+
+// multiply rq
+message mul_rq
+{
+	// mul a
+	int32 a = 1;
+	// mul b
+	int32 b = 2;
+}
+
+// multiply result
+message mul_rs
+{
+	// mul result
+	int32 r = 1;
+}
+
+// add request
+message add_rq
+{
+	// add params
+	repeated int64 params = 1; 
+}
+
+// add reply
+message add_rs
+{
+	// add result
+	int64 value = 1;
+}
+
+message a_ntf
+{
+	map<int32,int32> f1 = 1;
+}
+
+message b_ntf
+{
+	a_ntf f1 = 1;
+	repeated a_ntf f2 = 2;
+}
+
+
+service w_svc
+{
+call:
+	// add method
+	add(add_rq) add_rs;
+	// mul method
+	mul(mul_rq) mul_rs;
+	// will return error 
+	re(add_rq) add_rs;
+	call_one_way(add_rq);
+notify:
+	// notify fun
+	notify_func(add_rq);
+	
+}

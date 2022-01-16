@@ -20,7 +20,7 @@ func TestGetAddr1(t *testing.T) {
 }
 
 func TestGetAddr2(t *testing.T) {
-	addr, err := net.ResolveTCPAddr("tcp", "0.0.0.0:8080")
+	addr, err := net.ResolveTCPAddr("tcp", "0.0.0.0:19653")
 	if err != nil {
 		t.Fatal(err)
 	}

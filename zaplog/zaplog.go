@@ -43,18 +43,36 @@ func (log *Logger) New(funcName string) *LogEntities {
 	}
 }
 
-// Logic 逻辑层默认日志接口
-var Logic *Logger
+var NoopLogger *Logger = NewLogger(zap.NewNop())
 
-// Frame 框架层默认日志接口
-var Frame *Logger
+// logic 逻辑层默认日志接口
+var logic *Logger
+
+// frame 框架层默认日志接口
+var frame *Logger
 
 func init() {
 	pcfg := zap.NewProductionConfig()
 	pcfg.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
 	debug, _ := pcfg.Build()
-	Logic = NewLogger(debug)
+	logic = NewLogger(debug)
 
 	errLog, _ := zap.NewProduction(zap.IncreaseLevel(zap.ErrorLevel))
-	Frame = NewLogger(errLog)
+	frame = NewLogger(errLog)
+}
+
+func SetFrameLogger(l *Logger) {
+	frame = l
+}
+
+func GetFrameLogger() *Logger {
+	return frame
+}
+
+func SetLogicLogger(l *Logger) {
+	logic = l
+}
+
+func GetLogicLogger() *Logger {
+	return logic
 }

@@ -3,60 +3,30 @@ package main
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"time"
 
-	"github.com/aggronmagi/walle/net/process"
-
-	. "github.com/aggronmagi/walle/net/ws"
+	"github.com/aggronmagi/walle/network/ws"
+	"github.com/aggronmagi/walle/testpkg/wpb"
+	"github.com/aggronmagi/walle/util"
+	"github.com/aggronmagi/walle/zaplog"
 )
 
-type rpcRQ struct {
-	M int `json:"m"`
-	N int `json:"n"`
-}
-
-type rpcRS struct {
-	V1 int `json:"v1"`
-	V2 int `json:"v2"`
-}
-
 func main() {
-	cli, err := NewClient(fmt.Sprintf("ws://localhost:8080/ws"), http.Header{
-		"name": []string{"xxx"},
-	}, process.WithMsgCodec(process.MessageCodecJSON),
+	zaplog.SetFrameLogger(zaplog.NoopLogger)
+	zaplog.SetLogicLogger(zaplog.NoopLogger)
+	// zaplog.SetFrameLogger(zaplog.GetLogicLogger())
+
+	cli, err := ws.NewClient(
+		fmt.Sprintf("ws://localhost:%d/ws", 12345), nil,
 	)
 	if err != nil {
-		panic(err)
+		util.PanicIfError(err)
 	}
-	rq := &rpcRQ{108, 72}
+	time.Sleep(time.Second)
 
-	call := func(uri string) {
-		ctx := context.Background()
-		rs := &rpcRS{}
-		err = cli.Call(ctx, uri, rq, rs, process.NewCallOptions(
-			process.WithCallOptionsTimeout(time.Second),
-		))
-		fmt.Println("call rpc ", uri, err, rs)
-	}
-	call("f1")
-	call("f3")
-	call("f2")
+	wcli := wpb.NewWSvcClient(cli)
+	ctx := context.Background()
 
-	n := 10000
-
-	callBench := func(uri string) {
-		ctx := context.Background()
-		rs := &rpcRS{}
-		err = cli.Call(ctx, uri, rq, rs, process.NewCallOptions(
-			process.WithCallOptionsTimeout(time.Second),
-		))
-	}
-
-	start := time.Now()
-	for k := 0; k < n; k++ {
-		callBench("f1")
-	}
-	use := time.Now().Sub(start)
-	fmt.Println("use:", use, "--", use/time.Duration(n))
+	rs, err := wcli.Add(ctx, &wpb.AddRq{Params: []int64{100}})
+	fmt.Println(rs, err)
 }
