@@ -36,8 +36,8 @@ func (entity *LogEntities) Debug(msg string, fields ...zap.Field) {
 	if ce := entity.logger.Check(zap.DebugLevel, msg); ce != nil {
 		if entity.start != nil {
 			fields = append(fields,
-				zap.Int64("usems", time.Now().Sub(*entity.start).Milliseconds()),
-				// zap.Duration("use", time.Now().Sub(*entity.start)),
+				zap.Int64("usems", time.Since(*entity.start).Milliseconds()),
+				// zap.Duration("use", time.Since(*entity.start)),
 			)
 		}
 		fields = append(fields, entity.fields...)
@@ -50,8 +50,8 @@ func (entity *LogEntities) Info(msg string, fields ...zap.Field) {
 	if ce := entity.logger.Check(zap.InfoLevel, msg); ce != nil {
 		if entity.start != nil {
 			fields = append(fields,
-				zap.Int64("usems", time.Now().Sub(*entity.start).Milliseconds()),
-				// zap.Duration("use", time.Now().Sub(*entity.start)),
+				zap.Int64("usems", time.Since(*entity.start).Milliseconds()),
+				// zap.Duration("use", time.Since(*entity.start)),
 			)
 		}
 		fields = append(fields, entity.fields...)
@@ -64,8 +64,8 @@ func (entity *LogEntities) Warn(msg string, fields ...zap.Field) {
 	if ce := entity.logger.Check(zap.WarnLevel, msg); ce != nil {
 		if entity.start != nil {
 			fields = append(fields,
-				zap.Int64("usems", time.Now().Sub(*entity.start).Milliseconds()),
-				// zap.Duration("use", time.Now().Sub(*entity.start)),
+				zap.Int64("usems", time.Since(*entity.start).Milliseconds()),
+				// zap.Duration("use", time.Since(*entity.start)),
 			)
 		}
 		fields = append(fields, entity.fields...)
@@ -78,8 +78,8 @@ func (entity *LogEntities) Error(msg string, fields ...zap.Field) {
 	if ce := entity.logger.Check(zap.ErrorLevel, msg); ce != nil {
 		if entity.start != nil {
 			fields = append(fields,
-				zap.Int64("usems", time.Now().Sub(*entity.start).Milliseconds()),
-				// zap.Duration("use", time.Now().Sub(*entity.start)),
+				zap.Int64("usems", time.Since(*entity.start).Milliseconds()),
+				// zap.Duration("use", time.Since(*entity.start)),
 			)
 		}
 		fields = append(fields, entity.fields...)

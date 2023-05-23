@@ -65,7 +65,6 @@ func (t *teeService) Stop() {
 	for k := len(t.started) - 1; k >= 0; k-- {
 		t.started[k].Stop()
 	}
-	return
 }
 
 // Finish 清理
@@ -73,7 +72,6 @@ func (t *teeService) Finish() {
 	for k := len(t.initd) - 1; k >= 0; k-- {
 		t.initd[k].Finish()
 	}
-	return
 }
 
 // FuncService for functions
