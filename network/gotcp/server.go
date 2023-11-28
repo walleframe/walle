@@ -139,8 +139,8 @@ func NewServer(opts ...ServerOption) *GoServer {
 	s.opts.MaxMessageSizeLimit -= len(s.opts.PacketHeadBuf())
 	// process opts
 	s.procInner = process.NewInnerOptions(
-		process.WithInnerOptionsLoad(&s.pkgLoad),
-		process.WithInnerOptionsSequence(&s.sequence),
+		process.WithInnerOptionLoad(&s.pkgLoad),
+		process.WithInnerOptionSequence(&s.sequence),
 	)
 	s.procOpts = process.NewProcessOptions(
 		s.opts.ProcessOptions...,
@@ -246,10 +246,10 @@ func (s *GoServer) accpetConn(conn net.Conn) {
 	}
 	sess.opts = s.opts
 	sess.Process.Inner.ApplyOption(
-		process.WithInnerOptionsContextPool(GoServerContextPool),
-		process.WithInnerOptionsOutput(sess),
+		process.WithInnerOptionContextPool(GoServerContextPool),
+		process.WithInnerOptionOutput(sess),
 		// bind data,must copy inner options
-		process.WithInnerOptionsBindData(sess),
+		process.WithInnerOptionBindData(sess),
 	)
 	// session count limit
 	if s.opts.AcceptLoadLimit(sess, s.acceptLoad.Inc()) {
@@ -277,10 +277,10 @@ func (s *GoServer) accpetConn(conn net.Conn) {
 	}
 	// apply config
 	sess.Process.Inner.ApplyOption(
-		process.WithInnerOptionsOutput(newSess),
-		process.WithInnerOptionsBindData(newSess),
-		process.WithInnerOptionsRouter(s.opts.SessionRouter(newSess, s.opts.Router)),
-		process.WithInnerOptionsParentCtx(sess.ctx),
+		process.WithInnerOptionOutput(newSess),
+		process.WithInnerOptionBindData(newSess),
+		process.WithInnerOptionRouter(s.opts.SessionRouter(newSess, s.opts.Router)),
+		process.WithInnerOptionParentCtx(sess.ctx),
 	)
 	sess.Process.Opts.ApplyOption(
 		process.WithLogger(s.opts.SessionLogger(newSess, sess.Process.Opts.Logger)),

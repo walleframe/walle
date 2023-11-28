@@ -30,9 +30,9 @@ func NewClientEx(addr string, head http.Header,
 		logger: svr.FrameLogger,
 	}
 	cli.Process.Inner.ApplyOption(
-		process.WithInnerOptionsOutput(cli),
-		process.WithInnerOptionsBindData(cli),
-		process.WithInnerOptionsContextPool(GoServerContextPool),
+		process.WithInnerOptionOutput(cli),
+		process.WithInnerOptionBindData(cli),
+		process.WithInnerOptionContextPool(GoServerContextPool),
 	)
 	cli.opts = svr // TODO 客户端独立配置转换
 	cli.ctx = context.Background()

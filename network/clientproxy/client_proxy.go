@@ -143,9 +143,9 @@ func (c *ClientProxy) linkEntry(e discovery.Entry, wg *sync.WaitGroup) (err erro
 	}
 	net, addr := e.Address()
 	cli, err := c.opts.NewClient(net, addr, process.NewInnerOptions(
-		process.WithInnerOptionsBindData(c),
-		process.WithInnerOptionsLoad(&c.pkgLoad),
-		process.WithInnerOptionsSequence(&c.sequence),
+		process.WithInnerOptionBindData(c),
+		process.WithInnerOptionLoad(&c.pkgLoad),
+		process.WithInnerOptionSequence(&c.sequence),
 	))
 	if err != nil {
 		c.opts.FrameLogger.New("clientproxy.LinkEntity").Error("link failed", zap.Error(err),
@@ -212,7 +212,6 @@ func (c *ClientProxy) linkEntities() {
 	}
 }
 
-//
 func (c *ClientProxy) Call(ctx context.Context, uri interface{}, rq, rs interface{}, opts *rpc.CallOptions) (err error) {
 	entry, err := c.picker.Pick(ctx)
 	if err != nil {

@@ -72,3 +72,40 @@ func (c *pbCodec) Unmarshal(data []byte, v interface{}) (err error) {
 	err = errcode.ErrUnmarshalFailed
 	return
 }
+
+// WalleCodec walle proto codec
+var WalleCodec Codec = new(wpbCodec)
+
+type wpbCodec struct{}
+
+func (c *wpbCodec) Marshal(v interface{}) (data []byte, err error) {
+	if wpb, ok := v.(interface {
+		MarshalObject() (data []byte, err error)
+	}); ok {
+		return wpb.MarshalObject()
+	}
+	if pb, ok := v.(proto.Message); ok {
+		//data =  mempool.Pool().Alloc(proto.Size(pb))
+		//buf := proto.NewBuffer(data[:0])
+		data, err = proto.Marshal(pb)
+		err = errcode.WrapError(errcode.ErrMarshalFailed, err) // buf.Marshal(pb))
+		return
+	}
+	err = errcode.ErrMarshalFailed
+	return
+}
+
+func (c *wpbCodec) Unmarshal(data []byte, v interface{}) (err error) {
+	if wpb, ok := v.(interface {
+		UnmarshalObject(data []byte) (err error)
+	}); ok {
+		return wpb.UnmarshalObject(data)
+	}
+	if pb, ok := v.(proto.Message); ok {
+		err = proto.Unmarshal(data, pb)
+		err = errcode.WrapError(errcode.ErrUnmarshalFailed, err)
+		return
+	}
+	err = errcode.ErrUnmarshalFailed
+	return
+}

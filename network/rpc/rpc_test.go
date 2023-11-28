@@ -51,7 +51,7 @@ func TestProcess_Call(t *testing.T) {
 	buf := &bytes.Buffer{}
 	p := NewRPCProcess(
 		process.NewInnerOptions(
-			process.WithInnerOptionsOutput(buf),
+			process.WithInnerOptionOutput(buf),
 		),
 		process.NewProcessOptions(
 			process.WithLogger(
@@ -141,7 +141,7 @@ func TestProcess_AsyncCall(t *testing.T) {
 	buf := &bytes.Buffer{}
 	p := NewRPCProcess(
 		process.NewInnerOptions(
-			process.WithInnerOptionsOutput(buf),
+			process.WithInnerOptionOutput(buf),
 		),
 		process.NewProcessOptions(
 			process.WithLogger(
@@ -217,7 +217,7 @@ func TestProcess_Notify(t *testing.T) {
 	buf := &bytes.Buffer{}
 	p := NewRPCProcess(
 		process.NewInnerOptions(
-			process.WithInnerOptionsOutput(buf),
+			process.WithInnerOptionOutput(buf),
 		),
 		process.NewProcessOptions(
 			process.WithLogger(
@@ -271,7 +271,7 @@ func TestProcess_WithRouter(t *testing.T) {
 	buf := &bytes.Buffer{}
 	p := NewRPCProcess(
 		process.NewInnerOptions(
-			process.WithInnerOptionsOutput(buf),
+			process.WithInnerOptionOutput(buf),
 		),
 		process.NewProcessOptions(
 			process.WithLogger(

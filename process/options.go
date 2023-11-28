@@ -11,6 +11,7 @@ import (
 )
 
 // InnerOption use for process
+//
 //go:generate gogen option -n InnerOption -f Inner -o option.inner.go
 func walleProcessInner() interface{} {
 	return map[string]interface{}{
@@ -32,6 +33,7 @@ func walleProcessInner() interface{} {
 }
 
 // ProcessOption process option
+//
 //go:generate gogen option -n ProcessOption -o option.process.go
 func walleProcessOption() interface{} {
 	return map[string]interface{}{
@@ -48,7 +50,7 @@ func walleProcessOption() interface{} {
 		// packet codec
 		"PacketCodec": packet.Codec(packet.GetCodec()),
 		// message codec
-		"MsgCodec": message.Codec(message.ProtobufCodec),
+		"MsgCodec": message.Codec(message.WalleCodec),
 		// dispatch packet data filter
 		"DispatchDataFilter": DataDispatcherFilter(DefaultDataFilter),
 		// dispatch packet struct filter

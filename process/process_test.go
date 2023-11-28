@@ -84,8 +84,8 @@ func TestProcess_OnRead(t *testing.T) {
 	buf := &bytes.Buffer{}
 	p := NewProcess(
 		NewInnerOptions(
-			WithInnerOptionsOutput(buf),
-			WithInnerOptionsRouter(r),
+			WithInnerOptionOutput(buf),
+			WithInnerOptionRouter(r),
 		),
 		NewProcessOptions(
 			WithLogger(
@@ -148,8 +148,8 @@ func BenchmarkProcess(b *testing.B) {
 	buf := &bytes.Buffer{}
 	p := NewProcess(
 		NewInnerOptions(
-			WithInnerOptionsOutput(buf),
-			WithInnerOptionsRouter(r),
+			WithInnerOptionOutput(buf),
+			WithInnerOptionRouter(r),
 		),
 		NewProcessOptions(
 			WithLogger(

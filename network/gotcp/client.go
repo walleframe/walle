@@ -18,6 +18,7 @@ import (
 )
 
 // ClientOption
+//
 //go:generate gogen option -n ClientOption -f Client -o option.client.go
 func walleClient() interface{} {
 	return map[string]interface{}{
@@ -128,9 +129,9 @@ func NewClientEx(inner *process.InnerOptions, copts *ClientOptions) (cli *GoClie
 		),
 	}
 	cli.Inner.ApplyOption(
-		process.WithInnerOptionsOutput(cli),
-		process.WithInnerOptionsBindData(cli),
-		process.WithInnerOptionsContextPool(GoClientContextPool),
+		process.WithInnerOptionOutput(cli),
+		process.WithInnerOptionBindData(cli),
+		process.WithInnerOptionContextPool(GoClientContextPool),
 	)
 	cli.opts = copts
 	cli.ctx = context.Background()

@@ -38,6 +38,7 @@ const (
 )
 
 // ServerOption
+//
 //go:generate gogen option -n ServerOption -o option.server.go
 func walleServer() interface{} {
 	return map[string]interface{}{
@@ -333,8 +334,8 @@ func (svr *GNetServer) handleNewConn(conn gnet.Conn) {
 		svr:  svr,
 		RPCProcess: rpc.NewRPCProcess(
 			process.NewInnerOptions(
-				process.WithInnerOptionsLoad(&svr.pkgLoad),
-				process.WithInnerOptionsSequence(&svr.sequence),
+				process.WithInnerOptionLoad(&svr.pkgLoad),
+				process.WithInnerOptionSequence(&svr.sequence),
 			),
 			process.NewProcessOptions(
 				svr.opts.ProcessOptions...,
@@ -346,8 +347,8 @@ func (svr *GNetServer) handleNewConn(conn gnet.Conn) {
 	}
 	// sess.opts = svr.opts
 	sess.Inner.ApplyOption(
-		process.WithInnerOptionsContextPool(GNETServerContextPool),
-		process.WithInnerOptionsOutput(sess),
+		process.WithInnerOptionContextPool(GNETServerContextPool),
+		process.WithInnerOptionOutput(sess),
 	)
 	// session count limit
 	if svr.opts.AcceptLoadLimit(sess, svr.acceptLoad.Inc()) {
@@ -375,10 +376,10 @@ func (svr *GNetServer) handleNewConn(conn gnet.Conn) {
 	}
 	// apply config
 	sess.Process.Inner.ApplyOption(
-		process.WithInnerOptionsOutput(newSess),
-		process.WithInnerOptionsBindData(newSess),
-		process.WithInnerOptionsRouter(svr.opts.SessionRouter(newSess, svr.opts.Router)),
-		process.WithInnerOptionsParentCtx(sess.ctx),
+		process.WithInnerOptionOutput(newSess),
+		process.WithInnerOptionBindData(newSess),
+		process.WithInnerOptionRouter(svr.opts.SessionRouter(newSess, svr.opts.Router)),
+		process.WithInnerOptionParentCtx(sess.ctx),
 	)
 	sess.Process.Opts.ApplyOption(
 		process.WithLogger(svr.opts.SessionLogger(newSess, sess.Process.Opts.Logger)),

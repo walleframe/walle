@@ -36,6 +36,7 @@ const (
 )
 
 // ServerOption
+//
 //go:generate gogen option -n ServerOption -o option.server.go
 func walleServer() interface{} {
 	return map[string]interface{}{
@@ -107,8 +108,8 @@ func NewServer(opts ...ServerOption) *WsServer {
 	s.server.Handler = s.opts.HttpServeMux
 	// process opts
 	s.procInner = process.NewInnerOptions(
-		process.WithInnerOptionsLoad(&s.pkgLoad),
-		process.WithInnerOptionsSequence(&s.sequence),
+		process.WithInnerOptionLoad(&s.pkgLoad),
+		process.WithInnerOptionSequence(&s.sequence),
 	)
 	s.procOpts = process.NewProcessOptions(
 		s.opts.ProcessOptions...,
@@ -155,8 +156,8 @@ func (s *WsServer) HttpServeWs(w http.ResponseWriter, r *http.Request) {
 		svr:  s,
 		RPCProcess: rpc.NewRPCProcess(
 			process.NewInnerOptions(
-				process.WithInnerOptionsLoad(&s.pkgLoad),
-				process.WithInnerOptionsSequence(&s.sequence),
+				process.WithInnerOptionLoad(&s.pkgLoad),
+				process.WithInnerOptionSequence(&s.sequence),
 			),
 			process.NewProcessOptions(
 				s.opts.ProcessOptions...,
@@ -168,8 +169,8 @@ func (s *WsServer) HttpServeWs(w http.ResponseWriter, r *http.Request) {
 	}
 	sess.opts = s.opts
 	sess.Inner.ApplyOption(
-		process.WithInnerOptionsContextPool(GoServerContextPool),
-		process.WithInnerOptionsOutput(sess),
+		process.WithInnerOptionContextPool(GoServerContextPool),
+		process.WithInnerOptionOutput(sess),
 	)
 	// session count limit
 	if s.opts.AcceptLoadLimit(sess, s.acceptLoad.Inc()) {
@@ -194,10 +195,10 @@ func (s *WsServer) HttpServeWs(w http.ResponseWriter, r *http.Request) {
 	}
 	// apply config
 	sess.Process.Inner.ApplyOption(
-		process.WithInnerOptionsOutput(newSess),
-		process.WithInnerOptionsBindData(newSess),
-		process.WithInnerOptionsRouter(s.opts.SessionRouter(newSess, s.opts.Router)),
-		process.WithInnerOptionsParentCtx(sess.ctx),
+		process.WithInnerOptionOutput(newSess),
+		process.WithInnerOptionBindData(newSess),
+		process.WithInnerOptionRouter(s.opts.SessionRouter(newSess, s.opts.Router)),
+		process.WithInnerOptionParentCtx(sess.ctx),
 	)
 	sess.Process.Opts.ApplyOption(
 		process.WithLogger(s.opts.SessionLogger(newSess, sess.Process.Opts.Logger)),

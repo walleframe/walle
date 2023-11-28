@@ -97,6 +97,7 @@ type ProtocolWraper interface {
 }
 #+end_src
 
+默认的 ~Codec~ 依赖wpb生成的代码。如使用gogo可以使用 ~message.ProtobufCodec~ 替换。使用google protobuf 请自行定义。
 * 网络层
 [[./doc/network.org][网络层详细文档]]
 
