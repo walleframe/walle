@@ -43,8 +43,8 @@ go install github.com/aggronmagi/wplugins/cmd/wzap@latest
  - [ ] gpool
  - [ ] skeleton
 ** TODO 代码生成
- - [ ] excel配置相关
- - [ ] rpc、tcp代码
+ - [X] excel配置相关
+ - [X] rpc、tcp代码
  - [ ] redis/mysql 代码
 ** TODO 优化
  - [X] 客户端链接允许不直接建立链接
