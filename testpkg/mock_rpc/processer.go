@@ -8,8 +8,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	rpc "github.com/aggronmagi/walle/network/rpc"
-	process "github.com/aggronmagi/walle/process"
+	rpc "github.com/walleframe/walle/network/rpc"
+	process "github.com/walleframe/walle/process"
 	gomock "github.com/golang/mock/gomock"
 )
 

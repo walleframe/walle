@@ -8,7 +8,7 @@ import (
 
 	"bytes"
 
-	"github.com/aggronmagi/walle/kvstore"
+	"github.com/walleframe/walle/kvstore"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	namespace "go.etcd.io/etcd/client/v3/namespace"
 
@@ -18,6 +18,7 @@ import (
 )
 
 // Option config etcdv3 store
+//
 //go:generate gogen option -n Option -o option.go
 func walleOptions() interface{} {
 	return map[string]interface{}{

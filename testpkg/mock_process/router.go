@@ -7,7 +7,7 @@ package mock_process
 import (
 	reflect "reflect"
 
-	process "github.com/aggronmagi/walle/process"
+	process "github.com/walleframe/walle/process"
 	gomock "github.com/golang/mock/gomock"
 )
 

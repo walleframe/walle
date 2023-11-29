@@ -8,7 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	discovery "github.com/aggronmagi/walle/network/discovery"
+	discovery "github.com/walleframe/walle/network/discovery"
 	gomock "github.com/golang/mock/gomock"
 )
 

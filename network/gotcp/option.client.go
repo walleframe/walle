@@ -10,9 +10,9 @@ import (
 	net "net"
 	time "time"
 
-	process "github.com/aggronmagi/walle/process"
-	errcode "github.com/aggronmagi/walle/process/errcode"
-	zaplog "github.com/aggronmagi/walle/zaplog"
+	process "github.com/walleframe/walle/process"
+	errcode "github.com/walleframe/walle/process/errcode"
+	zaplog "github.com/walleframe/walle/zaplog"
 )
 
 var _ = walleClient()

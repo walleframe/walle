@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/aggronmagi/walle/testpkg/msg"
 	"github.com/stretchr/testify/assert"
+	"github.com/walleframe/walle/testpkg/msg"
 )
 
 func TestMessageCodec(t *testing.T) {

@@ -8,8 +8,8 @@ import (
 	http "net/http"
 	time "time"
 
-	process "github.com/aggronmagi/walle/process"
-	zaplog "github.com/aggronmagi/walle/zaplog"
+	process "github.com/walleframe/walle/process"
+	zaplog "github.com/walleframe/walle/zaplog"
 	websocket "github.com/gorilla/websocket"
 )
 

@@ -9,11 +9,11 @@ import (
 	reflect "reflect"
 	time "time"
 
-	network "github.com/aggronmagi/walle/network"
-	rpc "github.com/aggronmagi/walle/network/rpc"
-	process "github.com/aggronmagi/walle/process"
-	metadata "github.com/aggronmagi/walle/process/metadata"
-	zaplog "github.com/aggronmagi/walle/zaplog"
+	network "github.com/walleframe/walle/network"
+	rpc "github.com/walleframe/walle/network/rpc"
+	process "github.com/walleframe/walle/process"
+	metadata "github.com/walleframe/walle/process/metadata"
+	zaplog "github.com/walleframe/walle/zaplog"
 	gomock "github.com/golang/mock/gomock"
 	zap "go.uber.org/zap"
 )

@@ -6,14 +6,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aggronmagi/walle/process"
-	"github.com/aggronmagi/walle/process/message"
-	metadata "github.com/aggronmagi/walle/process/metadata"
-	"github.com/aggronmagi/walle/process/packet"
-	"github.com/aggronmagi/walle/testpkg"
-	"github.com/aggronmagi/walle/zaplog"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/walleframe/walle/process"
+	"github.com/walleframe/walle/process/message"
+	metadata "github.com/walleframe/walle/process/metadata"
+	"github.com/walleframe/walle/process/packet"
+	"github.com/walleframe/walle/testpkg"
+	"github.com/walleframe/walle/zaplog"
 	"go.uber.org/zap"
 )
 

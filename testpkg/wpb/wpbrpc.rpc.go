@@ -2,9 +2,9 @@
 package wpb
 
 import (
-	"github.com/aggronmagi/walle/network"
-	"github.com/aggronmagi/walle/network/rpc"
-	"github.com/aggronmagi/walle/process"
+	"github.com/walleframe/walle/network"
+	"github.com/walleframe/walle/network/rpc"
+	"github.com/walleframe/walle/process"
 
 	"context"
 )

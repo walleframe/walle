@@ -7,10 +7,10 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/aggronmagi/walle/testpkg"
 	"github.com/golang/mock/gomock"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	"github.com/walleframe/walle/testpkg"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )

@@ -5,10 +5,10 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/aggronmagi/walle/process"
-	"github.com/aggronmagi/walle/testpkg"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/walleframe/walle/process"
+	"github.com/walleframe/walle/testpkg"
 )
 
 func TestPacketDispatcherChain(t *testing.T) {

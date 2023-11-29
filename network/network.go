@@ -4,9 +4,9 @@ import (
 	"context"
 	"io"
 
-	"github.com/aggronmagi/walle/network/rpc"
-	"github.com/aggronmagi/walle/process"
-	"github.com/aggronmagi/walle/process/metadata"
+	"github.com/walleframe/walle/network/rpc"
+	"github.com/walleframe/walle/process"
+	"github.com/walleframe/walle/process/metadata"
 )
 
 //go:generate mockgen -source network.go -destination ../testpkg/mock_network/network.go

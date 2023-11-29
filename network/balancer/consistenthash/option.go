@@ -8,9 +8,9 @@ import (
 	md5 "crypto/md5"
 	binary "encoding/binary"
 
-	balancer "github.com/aggronmagi/walle/network/balancer"
-	discovery "github.com/aggronmagi/walle/network/discovery"
-	util "github.com/aggronmagi/walle/util"
+	balancer "github.com/walleframe/walle/network/balancer"
+	discovery "github.com/walleframe/walle/network/discovery"
+	util "github.com/walleframe/walle/util"
 )
 
 var _ = walleConsistentOption()

@@ -1,7 +1,7 @@
 package message
 
 import (
-	"github.com/aggronmagi/walle/process/errcode"
+	"github.com/walleframe/walle/process/errcode"
 	//"github.com/golang/protobuf/proto"
 
 	proto "github.com/gogo/protobuf/proto"

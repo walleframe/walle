@@ -5,9 +5,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aggronmagi/walle/process/errcode"
-	"github.com/aggronmagi/walle/process/metadata"
-	"github.com/aggronmagi/walle/zaplog"
+	"github.com/walleframe/walle/process/errcode"
+	"github.com/walleframe/walle/process/metadata"
+	"github.com/walleframe/walle/zaplog"
 	"go.uber.org/zap"
 )
 

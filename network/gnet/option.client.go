@@ -7,8 +7,8 @@ package gnet
 import (
 	time "time"
 
-	process "github.com/aggronmagi/walle/process"
-	zaplog "github.com/aggronmagi/walle/zaplog"
+	process "github.com/walleframe/walle/process"
+	zaplog "github.com/walleframe/walle/zaplog"
 	gnet "github.com/panjf2000/gnet/v2"
 )
 

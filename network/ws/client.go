@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/aggronmagi/walle/network/rpc"
-	"github.com/aggronmagi/walle/process"
 	"github.com/gorilla/websocket"
+	"github.com/walleframe/walle/network/rpc"
+	"github.com/walleframe/walle/process"
 )
 
 // NewClientEx 创建客户端。NOTE: websocket socket 客户端不支持自动重连.仅用于测试

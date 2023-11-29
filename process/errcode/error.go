@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"github.com/aggronmagi/walle/util"
+	"github.com/walleframe/walle/util"
 )
 
 // ErrorResponse represent rpc call common error

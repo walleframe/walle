@@ -10,10 +10,10 @@ import (
 	net "net"
 	time "time"
 
-	discovery "github.com/aggronmagi/walle/network/discovery"
-	process "github.com/aggronmagi/walle/process"
-	errcode "github.com/aggronmagi/walle/process/errcode"
-	zaplog "github.com/aggronmagi/walle/zaplog"
+	discovery "github.com/walleframe/walle/network/discovery"
+	process "github.com/walleframe/walle/process"
+	errcode "github.com/walleframe/walle/process/errcode"
+	zaplog "github.com/walleframe/walle/zaplog"
 )
 
 var _ = walleServer()

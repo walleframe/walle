@@ -6,9 +6,9 @@ import (
 	"encoding/binary"
 	"sort"
 
-	"github.com/aggronmagi/walle/network/balancer"
-	"github.com/aggronmagi/walle/network/discovery"
-	"github.com/aggronmagi/walle/util"
+	"github.com/walleframe/walle/network/balancer"
+	"github.com/walleframe/walle/network/discovery"
+	"github.com/walleframe/walle/util"
 )
 
 //go:generate gogen option -n ConsistentOption -o option.go

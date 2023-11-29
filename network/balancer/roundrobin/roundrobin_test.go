@@ -6,12 +6,12 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/aggronmagi/walle/network"
-	"github.com/aggronmagi/walle/network/discovery"
-	"github.com/aggronmagi/walle/testpkg/mock_discovery"
-	"github.com/aggronmagi/walle/testpkg/mock_network"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/walleframe/walle/network"
+	"github.com/walleframe/walle/network/discovery"
+	"github.com/walleframe/walle/testpkg/mock_discovery"
+	"github.com/walleframe/walle/testpkg/mock_network"
 )
 
 const (

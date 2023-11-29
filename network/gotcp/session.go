@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aggronmagi/walle/network/rpc"
-	"github.com/aggronmagi/walle/process"
-	"github.com/aggronmagi/walle/process/errcode"
+	"github.com/walleframe/walle/network/rpc"
+	"github.com/walleframe/walle/process"
+	"github.com/walleframe/walle/process/errcode"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 )

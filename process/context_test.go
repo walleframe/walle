@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/aggronmagi/walle/testpkg"
 	"github.com/golang/mock/gomock"
+	"github.com/walleframe/walle/testpkg"
 	zap "go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )

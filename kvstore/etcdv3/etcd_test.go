@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aggronmagi/walle/kvstore"
-	"github.com/aggronmagi/walle/kvstore/etcdv3"
 	"github.com/stretchr/testify/assert"
+	"github.com/walleframe/walle/kvstore"
+	"github.com/walleframe/walle/kvstore/etcdv3"
 	"go.uber.org/zap"
 )
 

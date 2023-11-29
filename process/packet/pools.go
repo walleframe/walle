@@ -3,7 +3,7 @@ package packet
 import (
 	"sync"
 
-	"github.com/aggronmagi/walle/process/metadata"
+	"github.com/walleframe/walle/process/metadata"
 )
 
 // noopPacketPool not cache packet

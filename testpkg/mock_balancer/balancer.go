@@ -8,8 +8,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	balancer "github.com/aggronmagi/walle/network/balancer"
-	discovery "github.com/aggronmagi/walle/network/discovery"
+	balancer "github.com/walleframe/walle/network/balancer"
+	discovery "github.com/walleframe/walle/network/discovery"
 	gomock "github.com/golang/mock/gomock"
 )
 

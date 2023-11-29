@@ -7,7 +7,7 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/aggronmagi/walle/util/protowire"
+	"github.com/walleframe/walle/util/protowire"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )

@@ -3,8 +3,8 @@ package roundrobin
 import (
 	"context"
 
-	"github.com/aggronmagi/walle/network/balancer"
-	"github.com/aggronmagi/walle/network/discovery"
+	"github.com/walleframe/walle/network/balancer"
+	"github.com/walleframe/walle/network/discovery"
 	"go.uber.org/atomic"
 )
 
@@ -16,21 +16,21 @@ func NewBalancer(opts ...balancer.BalanceOption) balancer.PickerBuilder {
 	}
 }
 
-type rrPickerBuilder struct{
+type rrPickerBuilder struct {
 	opts *balancer.BalanceOptions
 }
 
 func (b *rrPickerBuilder) Build(es discovery.Entries) balancer.Picker {
 	return &rrPicker{
 		entries: es,
-		opts: b.opts,
+		opts:    b.opts,
 	}
 }
 
 type rrPicker struct {
 	entries discovery.Entries
 	index   atomic.Int32
-	opts *balancer.BalanceOptions
+	opts    *balancer.BalanceOptions
 }
 
 func (b *rrPicker) Pick(ctx context.Context) (discovery.Entry, error) {
@@ -45,4 +45,3 @@ func (b *rrPicker) Pick(ctx context.Context) (discovery.Entry, error) {
 	}
 	return nil, balancer.ErrNotValideEntry
 }
-

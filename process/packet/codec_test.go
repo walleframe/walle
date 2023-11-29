@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/aggronmagi/walle/process/metadata"
 	"github.com/stretchr/testify/assert"
+	"github.com/walleframe/walle/process/metadata"
 )
 
 func TestBytesURICodec(t *testing.T) {

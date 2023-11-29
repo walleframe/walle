@@ -1,9 +1,9 @@
 package packet
 
 import (
-	"github.com/aggronmagi/walle/process/errcode"
-	"github.com/aggronmagi/walle/process/message"
-	"github.com/aggronmagi/walle/process/metadata"
+	"github.com/walleframe/walle/process/errcode"
+	"github.com/walleframe/walle/process/message"
+	"github.com/walleframe/walle/process/metadata"
 	atomic "go.uber.org/atomic"
 )
 

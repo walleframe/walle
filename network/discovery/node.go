@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/aggronmagi/walle/network"
+	"github.com/walleframe/walle/network"
 )
 
 var (

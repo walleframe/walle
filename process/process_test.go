@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"testing"
 
-	message "github.com/aggronmagi/walle/process/message"
-	"github.com/aggronmagi/walle/process/metadata"
-	"github.com/aggronmagi/walle/process/packet"
-	"github.com/aggronmagi/walle/testpkg"
-	zaplog "github.com/aggronmagi/walle/zaplog"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	message "github.com/walleframe/walle/process/message"
+	"github.com/walleframe/walle/process/metadata"
+	"github.com/walleframe/walle/process/packet"
+	"github.com/walleframe/walle/testpkg"
+	zaplog "github.com/walleframe/walle/zaplog"
 	zap "go.uber.org/zap"
 )
 

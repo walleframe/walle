@@ -4,12 +4,13 @@ import (
 	"context"
 	"net"
 
-	"github.com/aggronmagi/walle/kvstore"
-	"github.com/aggronmagi/walle/util"
-	"github.com/aggronmagi/walle/zaplog"
 	"github.com/google/uuid"
+	"github.com/walleframe/walle/kvstore"
+	"github.com/walleframe/walle/util"
+	"github.com/walleframe/walle/zaplog"
 	"go.uber.org/zap"
 )
+
 //go:generate mockgen -source registry.go -destination ../../testpkg/mock_discovery/registry.go
 
 // Registry use for netwrok service register entry

@@ -1,6 +1,6 @@
 package wpb
 
-proto.gopkg = "github.com/aggronmagi/walle/testpkg/wpb"
+proto.gopkg = "github.com/walleframe/walle/testpkg/wpb"
 
 // test message
 message test_msg

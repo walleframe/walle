@@ -7,9 +7,9 @@ package mock_packet
 import (
 	reflect "reflect"
 
-	message "github.com/aggronmagi/walle/process/message"
-	metadata "github.com/aggronmagi/walle/process/metadata"
-	packet "github.com/aggronmagi/walle/process/packet"
+	message "github.com/walleframe/walle/process/message"
+	metadata "github.com/walleframe/walle/process/metadata"
+	packet "github.com/walleframe/walle/process/packet"
 	gomock "github.com/golang/mock/gomock"
 )
 

@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 
-	"github.com/aggronmagi/walle/network/gnet"
-	"github.com/aggronmagi/walle/process"
-	"github.com/aggronmagi/walle/testpkg/wpb"
-	"github.com/aggronmagi/walle/zaplog"
+	"github.com/walleframe/walle/network/gnet"
+	"github.com/walleframe/walle/process"
+	"github.com/walleframe/walle/testpkg/wpb"
+	"github.com/walleframe/walle/zaplog"
 )
 
 func main() {

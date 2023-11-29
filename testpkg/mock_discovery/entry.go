@@ -7,8 +7,8 @@ package mock_discovery
 import (
 	reflect "reflect"
 
-	network "github.com/aggronmagi/walle/network"
-	discovery "github.com/aggronmagi/walle/network/discovery"
+	network "github.com/walleframe/walle/network"
+	discovery "github.com/walleframe/walle/network/discovery"
 	gomock "github.com/golang/mock/gomock"
 )
 

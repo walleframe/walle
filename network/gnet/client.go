@@ -6,12 +6,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aggronmagi/walle/network"
-	"github.com/aggronmagi/walle/network/rpc"
-	process "github.com/aggronmagi/walle/process"
-	"github.com/aggronmagi/walle/process/errcode"
-	zaplog "github.com/aggronmagi/walle/zaplog"
 	"github.com/panjf2000/gnet/v2"
+	"github.com/walleframe/walle/network"
+	"github.com/walleframe/walle/network/rpc"
+	process "github.com/walleframe/walle/process"
+	"github.com/walleframe/walle/process/errcode"
+	zaplog "github.com/walleframe/walle/zaplog"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 )

@@ -26,7 +26,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aggronmagi/walle/testpkg"
+	"github.com/walleframe/walle/testpkg"
 )
 
 const defaultTestTimeout = 10 * time.Second

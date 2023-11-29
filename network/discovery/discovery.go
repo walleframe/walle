@@ -4,10 +4,11 @@ import (
 	"context"
 	"strings"
 
-	"github.com/aggronmagi/walle/kvstore"
-	"github.com/aggronmagi/walle/zaplog"
+	"github.com/walleframe/walle/kvstore"
+	"github.com/walleframe/walle/zaplog"
 	"go.uber.org/zap"
 )
+
 //go:generate mockgen -source discovery.go -destination ../../testpkg/mock_discovery/discovery.go
 
 // Discovery use for discover netwrok service entry

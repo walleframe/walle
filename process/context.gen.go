@@ -8,8 +8,8 @@ import (
 	context "context"
 	time "time"
 
-	metadata "github.com/aggronmagi/walle/process/metadata"
-	zaplog "github.com/aggronmagi/walle/zaplog"
+	metadata "github.com/walleframe/walle/process/metadata"
+	zaplog "github.com/walleframe/walle/zaplog"
 	zap "go.uber.org/zap"
 )
 

@@ -5,10 +5,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aggronmagi/walle/app"
+	"github.com/walleframe/walle/app"
 )
 
 // FuncCall 用于测试函数调用。
+//
 //go:generate mockgen -source wtest.go -package testpkg -destination gentest.go
 type FuncCall interface {
 	Call(v ...interface{})

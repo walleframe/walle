@@ -4,9 +4,9 @@ import (
 	"context"
 	"io"
 
-	"github.com/aggronmagi/walle/process/message"
-	"github.com/aggronmagi/walle/process/packet"
-	"github.com/aggronmagi/walle/zaplog"
+	"github.com/walleframe/walle/process/message"
+	"github.com/walleframe/walle/process/packet"
+	"github.com/walleframe/walle/zaplog"
 	"go.uber.org/atomic"
 )
 

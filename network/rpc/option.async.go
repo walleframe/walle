@@ -7,8 +7,8 @@ package rpc
 import (
 	time "time"
 
-	process "github.com/aggronmagi/walle/process"
-	metadata "github.com/aggronmagi/walle/process/metadata"
+	process "github.com/walleframe/walle/process"
+	metadata "github.com/walleframe/walle/process/metadata"
 )
 
 var _ = walleAsyncCallOption()

@@ -3,11 +3,11 @@ package main
 import (
 	"fmt"
 
-	"github.com/aggronmagi/walle/network/gotcp"
-	"github.com/aggronmagi/walle/network/kcp"
-	"github.com/aggronmagi/walle/process"
-	"github.com/aggronmagi/walle/testpkg/wpb"
-	"github.com/aggronmagi/walle/zaplog"
+	"github.com/walleframe/walle/network/gotcp"
+	"github.com/walleframe/walle/network/kcp"
+	"github.com/walleframe/walle/process"
+	"github.com/walleframe/walle/testpkg/wpb"
+	"github.com/walleframe/walle/zaplog"
 )
 
 func main() {

@@ -7,9 +7,9 @@ package clientproxy
 import (
 	time "time"
 
-	balancer "github.com/aggronmagi/walle/network/balancer"
-	discovery "github.com/aggronmagi/walle/network/discovery"
-	zaplog "github.com/aggronmagi/walle/zaplog"
+	balancer "github.com/walleframe/walle/network/balancer"
+	discovery "github.com/walleframe/walle/network/discovery"
+	zaplog "github.com/walleframe/walle/zaplog"
 )
 
 var _ = walleClientProxy()

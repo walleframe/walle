@@ -1,7 +1,7 @@
 package packet
 
 import (
-	"github.com/aggronmagi/walle/process/metadata"
+	"github.com/walleframe/walle/process/metadata"
 	"go.uber.org/zap/zapcore"
 )
 

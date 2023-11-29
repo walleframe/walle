@@ -9,9 +9,9 @@ import (
 	reflect "reflect"
 	time "time"
 
-	process "github.com/aggronmagi/walle/process"
-	metadata "github.com/aggronmagi/walle/process/metadata"
-	zaplog "github.com/aggronmagi/walle/zaplog"
+	process "github.com/walleframe/walle/process"
+	metadata "github.com/walleframe/walle/process/metadata"
+	zaplog "github.com/walleframe/walle/zaplog"
 	gomock "github.com/golang/mock/gomock"
 	zap "go.uber.org/zap"
 )

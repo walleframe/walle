@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/aggronmagi/walle/process/errcode"
-	"github.com/aggronmagi/walle/process/packet"
+	"github.com/walleframe/walle/process/errcode"
+	"github.com/walleframe/walle/process/packet"
 )
 
 //go:generate mockgen -source router.go -destination ../testpkg/mock_process/router.go

@@ -6,8 +6,8 @@ import (
 
 	"testing"
 
-	"github.com/aggronmagi/walle/app"
 	"github.com/golang/mock/gomock"
+	"github.com/walleframe/walle/app"
 	"go.uber.org/atomic"
 )
 

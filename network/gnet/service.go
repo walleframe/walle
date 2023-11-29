@@ -4,7 +4,7 @@ import (
 	"context"
 	"net"
 
-	"github.com/aggronmagi/walle/app"
+	"github.com/walleframe/walle/app"
 )
 
 // GNetService implement app.Service interface

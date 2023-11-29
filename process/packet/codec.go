@@ -3,9 +3,9 @@ package packet
 import (
 	"encoding/binary"
 
-	"github.com/aggronmagi/walle/process/errcode"
-	"github.com/aggronmagi/walle/process/metadata"
-	"github.com/aggronmagi/walle/util"
+	"github.com/walleframe/walle/process/errcode"
+	"github.com/walleframe/walle/process/metadata"
+	"github.com/walleframe/walle/util"
 )
 
 var defaultPacketCodec Codec = BytesURICodec

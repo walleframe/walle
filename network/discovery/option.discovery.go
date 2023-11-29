@@ -5,8 +5,8 @@
 package discovery
 
 import (
-	kvstore "github.com/aggronmagi/walle/kvstore"
-	zaplog "github.com/aggronmagi/walle/zaplog"
+	kvstore "github.com/walleframe/walle/kvstore"
+	zaplog "github.com/walleframe/walle/zaplog"
 )
 
 var _ = walleDiscovery()

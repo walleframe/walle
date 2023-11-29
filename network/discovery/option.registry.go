@@ -7,8 +7,8 @@ package discovery
 import (
 	net "net"
 
-	util "github.com/aggronmagi/walle/util"
-	zaplog "github.com/aggronmagi/walle/zaplog"
+	util "github.com/walleframe/walle/util"
+	zaplog "github.com/walleframe/walle/zaplog"
 	uuid "github.com/google/uuid"
 )
 

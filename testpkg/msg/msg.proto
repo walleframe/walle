@@ -1,7 +1,7 @@
 // Generate by wctl plugin(toproto). DO NOT EDIT.
 syntax = "proto3";
 package msg;
-option go_package = "github.com/aggronmagi/walle/testpkg/msg";
+option go_package = "github.com/walleframe/walle/testpkg/msg";
 
 // test message
 message TestMsg {

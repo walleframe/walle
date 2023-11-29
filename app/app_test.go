@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aggronmagi/walle/app"
 	"github.com/golang/mock/gomock"
+	"github.com/walleframe/walle/app"
 )
 
 // This example passes a context with a signal to tell a blocking function that

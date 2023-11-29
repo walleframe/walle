@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"sort"
 
-	"github.com/aggronmagi/walle/util"
+	"github.com/walleframe/walle/util"
 )
 
 // Codec use for marshal and unmarshal message

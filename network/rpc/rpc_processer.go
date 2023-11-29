@@ -7,7 +7,7 @@ package rpc
 import (
 	context "context"
 
-	process "github.com/aggronmagi/walle/process"
+	process "github.com/walleframe/walle/process"
 )
 
 // RPCProcess 通用rpc处理流程封装 封装

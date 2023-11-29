@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aggronmagi/walle/network/ws"
-	"github.com/aggronmagi/walle/testpkg/wpb"
-	"github.com/aggronmagi/walle/util"
-	"github.com/aggronmagi/walle/zaplog"
+	"github.com/walleframe/walle/network/ws"
+	"github.com/walleframe/walle/testpkg/wpb"
+	"github.com/walleframe/walle/util"
+	"github.com/walleframe/walle/zaplog"
 )
 
 func main() {

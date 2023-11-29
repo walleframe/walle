@@ -8,12 +8,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aggronmagi/walle/network/rpc"
-	"github.com/aggronmagi/walle/process"
-	"github.com/aggronmagi/walle/testpkg/wpb"
-	"github.com/aggronmagi/walle/util"
-	"github.com/aggronmagi/walle/zaplog"
 	"github.com/stretchr/testify/assert"
+	"github.com/walleframe/walle/network/rpc"
+	"github.com/walleframe/walle/process"
+	"github.com/walleframe/walle/testpkg/wpb"
+	"github.com/walleframe/walle/util"
+	"github.com/walleframe/walle/zaplog"
 )
 
 var (

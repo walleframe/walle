@@ -1,8 +1,8 @@
 package wpb
 
 import (
-	"github.com/aggronmagi/walle/network"
-	"github.com/aggronmagi/walle/process/errcode"
+	"github.com/walleframe/walle/network"
+	"github.com/walleframe/walle/process/errcode"
 )
 
 type WPBSvc struct{}

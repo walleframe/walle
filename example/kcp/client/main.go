@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aggronmagi/walle/network/gotcp"
-	"github.com/aggronmagi/walle/network/kcp"
-	"github.com/aggronmagi/walle/testpkg/wpb"
-	"github.com/aggronmagi/walle/util"
-	"github.com/aggronmagi/walle/zaplog"
+	"github.com/walleframe/walle/network/gotcp"
+	"github.com/walleframe/walle/network/kcp"
+	"github.com/walleframe/walle/testpkg/wpb"
+	"github.com/walleframe/walle/util"
+	"github.com/walleframe/walle/zaplog"
 )
 
 func main() {

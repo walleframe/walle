@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/aggronmagi/walle/process/packet"
-	"github.com/aggronmagi/walle/testpkg"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/walleframe/walle/process/packet"
+	"github.com/walleframe/walle/testpkg"
 )
 
 func TestMixRouter_Methods(t *testing.T) {

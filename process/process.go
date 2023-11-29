@@ -1,7 +1,7 @@
 package process
 
 import (
-	"github.com/aggronmagi/walle/process/errcode"
+	"github.com/walleframe/walle/process/errcode"
 	"go.uber.org/zap"
 )
 

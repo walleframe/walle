@@ -1,7 +1,7 @@
 package discovery
 
 import (
-	"github.com/aggronmagi/walle/network"
+	"github.com/walleframe/walle/network"
 )
 
 type Client = network.Client

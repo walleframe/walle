@@ -5,9 +5,9 @@
 package process
 
 import (
-	message "github.com/aggronmagi/walle/process/message"
-	packet "github.com/aggronmagi/walle/process/packet"
-	zaplog "github.com/aggronmagi/walle/zaplog"
+	message "github.com/walleframe/walle/process/message"
+	packet "github.com/walleframe/walle/process/packet"
+	zaplog "github.com/walleframe/walle/zaplog"
 )
 
 var _ = walleProcessOption()

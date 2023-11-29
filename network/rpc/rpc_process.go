@@ -4,10 +4,10 @@ import (
 	"context"
 	"sync"
 
-	"github.com/aggronmagi/walle/process"
-	"github.com/aggronmagi/walle/process/errcode"
-	"github.com/aggronmagi/walle/process/packet"
-	"github.com/aggronmagi/walle/zaplog"
+	"github.com/walleframe/walle/process"
+	"github.com/walleframe/walle/process/errcode"
+	"github.com/walleframe/walle/process/packet"
+	"github.com/walleframe/walle/zaplog"
 	"go.uber.org/zap"
 )
 

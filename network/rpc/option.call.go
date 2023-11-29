@@ -7,7 +7,7 @@ package rpc
 import (
 	time "time"
 
-	metadata "github.com/aggronmagi/walle/process/metadata"
+	metadata "github.com/walleframe/walle/process/metadata"
 )
 
 var _ = walleCallOption()

@@ -3,8 +3,8 @@ package hash
 import (
 	"context"
 
-	"github.com/aggronmagi/walle/network/balancer"
-	"github.com/aggronmagi/walle/network/discovery"
+	"github.com/walleframe/walle/network/balancer"
+	"github.com/walleframe/walle/network/discovery"
 )
 
 // NewBalancer new hash balancer

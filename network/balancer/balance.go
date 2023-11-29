@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 
-	"github.com/aggronmagi/walle/network/discovery"
+	"github.com/walleframe/walle/network/discovery"
 )
-//go:generate mockgen -source balance.go -destination ../../testpkg/mock_balancer/balancer.go
+
 // PickerBuilder use for build picker
+//
+//go:generate mockgen -source balance.go -destination ../../testpkg/mock_balancer/balancer.go
 type PickerBuilder interface {
 	Build(discovery.Entries) Picker
 }
