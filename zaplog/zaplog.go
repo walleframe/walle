@@ -2,6 +2,7 @@ package zaplog
 
 import (
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 // Logger 日志对象封装
@@ -52,12 +53,16 @@ var logic *Logger
 var frame *Logger
 
 func init() {
-	pcfg := zap.NewProductionConfig()
-	pcfg.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
-	debug, _ := pcfg.Build()
+	logicCfg := zap.NewProductionConfig()
+	logicCfg.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
+	logicCfg.EncoderConfig.EncodeTime = zapcore.RFC3339TimeEncoder
+	debug, _ := logicCfg.Build()
 	logic = NewLogger(debug)
 
-	errLog, _ := zap.NewProduction(zap.IncreaseLevel(zap.ErrorLevel))
+	frameCfg := zap.NewProductionConfig()
+	frameCfg.Level = zap.NewAtomicLevelAt(zap.ErrorLevel)
+	frameCfg.EncoderConfig.EncodeTime = zapcore.RFC3339TimeEncoder
+	errLog, _ := frameCfg.Build()
 	frame = NewLogger(errLog)
 }
 
