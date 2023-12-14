@@ -3,6 +3,7 @@ package app
 import "fmt"
 
 // Service 接口 是基础服务对象容器. 负责 各个基础服务对象的状态维护
+//
 //go:generate mockgen -source svc.go -package app_test -destination mock_test.go
 type Service interface {
 	Name() string
@@ -75,6 +76,7 @@ func (t *teeService) Finish() {
 }
 
 // FuncService for functions
+//
 //go:generate gogen option -n FuncSvcOption -o option.go
 func walleFuncService() interface{} {
 	return map[string]interface{}{

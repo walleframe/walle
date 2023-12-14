@@ -45,11 +45,12 @@ go install github.com/aggronmagi/wplugins/cmd/wzap@latest
 ** TODO 代码生成
  - [X] excel配置相关
  - [X] rpc、tcp代码
- - [ ] redis/mysql 代码
-** TODO 优化
+ - [X] redis 代码
+ - [ ] mysql
+** DONE 优化
  - [X] 客户端链接允许不直接建立链接
- - [ ] packet包 独立，不直接使用pb消息（兼容其他格式，比如sproto）
-** TODO 需要调整
+ - [X] packet包 独立，不直接使用pb消息（兼容其他格式，比如sproto）
+** DONE 需要调整
 TCPServer等，应该提供注册接口，而不是让外部直接去设置Router，每种设置，提供全局的默认值修改机制。
 * 代码约定
 * 组件替换

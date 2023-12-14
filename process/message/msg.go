@@ -73,15 +73,18 @@ func (c *pbCodec) Unmarshal(data []byte, v interface{}) (err error) {
 	return
 }
 
+type Message interface {
+	MarshalObject() (data []byte, err error)
+	UnmarshalObject(data []byte) (err error)
+}
+
 // WalleCodec walle proto codec
 var WalleCodec Codec = new(wpbCodec)
 
 type wpbCodec struct{}
 
 func (c *wpbCodec) Marshal(v interface{}) (data []byte, err error) {
-	if wpb, ok := v.(interface {
-		MarshalObject() (data []byte, err error)
-	}); ok {
+	if wpb, ok := v.(Message); ok {
 		return wpb.MarshalObject()
 	}
 	if pb, ok := v.(proto.Message); ok {
@@ -96,9 +99,7 @@ func (c *wpbCodec) Marshal(v interface{}) (data []byte, err error) {
 }
 
 func (c *wpbCodec) Unmarshal(data []byte, v interface{}) (err error) {
-	if wpb, ok := v.(interface {
-		UnmarshalObject(data []byte) (err error)
-	}); ok {
+	if wpb, ok := v.(Message); ok {
 		return wpb.UnmarshalObject(data)
 	}
 	if pb, ok := v.(proto.Message); ok {
