@@ -1,4 +1,4 @@
-package xmain
+package bootstrap
 
 import (
 	"log"
