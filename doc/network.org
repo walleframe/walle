@@ -1,6 +1,19 @@
 #+title: 网络层文档
 
 * 网络库
+
+网络层:
+ 1. 底层接口. io层，只提供系统层级交互. read/write
+ 2. 中层接口. process层，定制处理流程. 已完成
+ 3. 高层接口. 业务逻辑层.
+    手写代码,后续会分为2层. 
+    1. 生成代码层
+    2. 自定义逻辑层
+[[./doc/img/network.png]]
+
+Process层:
+[[./doc/img/process.png]]
+
 ** 层级
  1. 底层接口. io层，只提供系统层级交互. read/write
  2. 中层接口. process层，定制处理流程. 已完成

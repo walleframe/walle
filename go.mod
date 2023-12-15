@@ -10,6 +10,7 @@ require (
 	github.com/json-iterator/go v1.1.12
 	github.com/panjf2000/gnet/v2 v2.1.2
 	github.com/sirupsen/logrus v1.8.1
+	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.7.0
 	github.com/xtaci/kcp-go v5.4.20+incompatible
 	go.etcd.io/etcd/client/v3 v3.5.1

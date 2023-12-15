@@ -6,26 +6,28 @@ import (
 
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/walleframe/walle/app"
+	"github.com/walleframe/walle/testpkg/mock_app"
+
+	"github.com/golang/mock/gomock"
 	"go.uber.org/atomic"
 )
 
 func TestFuncService(t *testing.T) {
 	mc := gomock.NewController(t)
-	check := NewMockService(mc)
+	check := mock_app.NewMockService(mc)
 	check.EXPECT().Name().AnyTimes().Return("test-svc")
 	testNornmal(check)
 	svc := app.FuncService(
 		app.WithName("TestFuncService"),
-		app.WithInit(func() (err error) {
-			return check.Init()
+		app.WithInit(func(s app.Stoper) (err error) {
+			return check.Init(s)
 		}),
 		app.WithFinish(func() {
 			check.Finish()
 		}),
-		app.WithStart(func() (err error) {
-			return check.Start()
+		app.WithStart(func(s app.Stoper) (err error) {
+			return check.Start(s)
 		}),
 		app.WithStop(func() {
 			check.Stop()
@@ -67,9 +69,9 @@ func testTeeNomal(t *testing.T, mc *gomock.Controller, num int) (svcs []app.Serv
 	start := atomic.Int32{}
 	for i := 0; i < num; i++ {
 		index := int32(i)
-		svc := NewMockService(mc)
+		svc := mock_app.NewMockService(mc)
 		svc.EXPECT().Name().AnyTimes().Return(fmt.Sprintf("test-%d", i))
-		svc.EXPECT().Init().DoAndReturn(func() error {
+		svc.EXPECT().Init(gomock.Any()).DoAndReturn(func(s app.Stoper) error {
 			ret := init.Add(1)
 			if ret != index+1 {
 				t.Error("start sequece invalid")
@@ -77,7 +79,7 @@ func testTeeNomal(t *testing.T, mc *gomock.Controller, num int) (svcs []app.Serv
 			t.Log("action init ", index)
 			return nil
 		})
-		svc.EXPECT().Start().DoAndReturn(func() error {
+		svc.EXPECT().Start(gomock.Any()).DoAndReturn(func(s app.Stoper) error {
 			ret := start.Add(1)
 			if ret != index+1 {
 				t.Error("start sequece invalid")
@@ -111,16 +113,16 @@ func TestTeeService_Failed(t *testing.T) {
 		num         int
 		init, start int
 	}{
-		// {"normal", 0, -1, -1},
-		// {"normal", 1, -1, -1},
-		// {"normal", 2, -1, -1},
-		// {"normal", 10, -1, -1},
-		// {"initFailed", 1, 0, -1},
+		//{"normal", 0, -1, -1},
+		//{"normal", 1, -1, -1},
+		//{"normal", 2, -1, -1},
+		//{"normal", 10, -1, -1},
+		//{"initFailed", 1, 0, -1},
 		{"initFailed", 3, 1, -1},
-		// {"initFailed", 3, 2, -1},
+		//{"initFailed", 3, 2, -1},
 	}
 	for _, v := range datas {
-		t.Run(fmt.Sprintf("%s - %d", v.name, v.num), func(t *testing.T) {
+		t.Run(fmt.Sprintf("%v", v), func(t *testing.T) {
 			mc := gomock.NewController(t)
 			defer mc.Finish()
 			svcs, ret, flag := testTeeCheck(t, mc, v.num, v.init, v.start)
@@ -138,16 +140,16 @@ func testTeeCheck(t *testing.T, mc *gomock.Controller, num, initIdx, startIdx in
 	start := atomic.Int32{}
 	initFailed := errors.New("init failed")
 	startFailed := errors.New("start failed")
-	var arrs []*MockService
+	var arrs []*mock_app.MockService
 	for i := 0; i < num; i++ {
-		svc := NewMockService(mc)
+		svc := mock_app.NewMockService(mc)
 		svc.EXPECT().Name().AnyTimes().Return(fmt.Sprintf("test-%d", i))
 		arrs = append(arrs, svc)
 	}
 	for i, svc := range arrs {
 		index := i
 		t.Log("need exce run", index, "init")
-		svc.EXPECT().Init().DoAndReturn(func() error {
+		svc.EXPECT().Init(gomock.Any()).DoAndReturn(func(s app.Stoper) error {
 			t.Log("exce run", index, "init")
 			v := int(init.Add(1))
 			if v != index+1 {
@@ -170,7 +172,7 @@ func testTeeCheck(t *testing.T, mc *gomock.Controller, num, initIdx, startIdx in
 		}
 
 		t.Log("need exce run", index, "start")
-		svc.EXPECT().Start().DoAndReturn(func() error {
+		svc.EXPECT().Start(gomock.Any()).DoAndReturn(func(s app.Stoper) error {
 			t.Log("exce run", index, "start")
 			v := int(start.Add(1))
 			if v != index+1 {

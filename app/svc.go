@@ -1,14 +1,17 @@
 package app
 
-import "fmt"
+import (
+	"fmt"
+	"log"
+)
 
 // Service 接口 是基础服务对象容器. 负责 各个基础服务对象的状态维护
 //
-//go:generate mockgen -source svc.go -package app_test -destination mock_test.go
+//go:generate mockgen -source svc.go -destination ../testpkg/mock_app/mock_app.go
 type Service interface {
 	Name() string
-	Init() (err error)
-	Start() (err error)
+	Init(Stoper) (err error)
+	Start(Stoper) (err error)
 	Stop()
 	Finish()
 }
@@ -34,29 +37,39 @@ func (t *teeService) Name() string {
 }
 
 // Init 初始化
-func (t *teeService) Init() (err error) {
+func (t *teeService) Init(s Stoper) (err error) {
 	for _, v := range t.services {
-		err = v.Init()
+		log.Printf("service %s wait init %#v\n", v.Name(), v)
+		err = v.Init(s)
 		if err != nil {
 			err = fmt.Errorf("service %s init failed:%w", v.Name(), err)
-			defer t.Finish()
+			log.Println(err)
 			return
 		}
 		t.initd = append(t.initd, v)
+		if s.IsStop() {
+			return
+		}
+		log.Println("service", v.Name(), "init finish")
 	}
 	return
 }
 
 // Start 启动
-func (t *teeService) Start() (err error) {
+func (t *teeService) Start(s Stoper) (err error) {
 	for _, v := range t.initd {
-		err = v.Start()
+		log.Println("service", v.Name(), "wait start", fmt.Sprintf("%#v", v))
+		err = v.Start(s)
 		if err != nil {
 			err = fmt.Errorf("service %s start failed:%w", v.Name(), err)
-			defer t.Stop()
+			log.Println(err)
 			return
 		}
 		t.started = append(t.started, v)
+		if s.IsStop() {
+			return
+		}
+		log.Println("service", v.Name(), "start finish")
 	}
 	return
 }
@@ -64,15 +77,19 @@ func (t *teeService) Start() (err error) {
 // Stop 关闭
 func (t *teeService) Stop() {
 	for k := len(t.started) - 1; k >= 0; k-- {
+		log.Println("service", t.started[k].Name(), "stop")
 		t.started[k].Stop()
 	}
+	return
 }
 
 // Finish 清理
 func (t *teeService) Finish() {
 	for k := len(t.initd) - 1; k >= 0; k-- {
+		log.Println("service", t.initd[k].Name(), "finish")
 		t.initd[k].Finish()
 	}
+	return
 }
 
 // FuncService for functions
@@ -83,11 +100,11 @@ func walleFuncService() interface{} {
 		// Service Name
 		"Name": "funcSvc",
 		// Init Function
-		"Init": func() (err error) {
+		"Init": func(Stoper) (err error) {
 			return nil
 		},
 		// Start Function
-		"Start": func() (err error) {
+		"Start": func(Stoper) (err error) {
 			return nil
 		},
 		// Stop Function
@@ -115,13 +132,13 @@ func (f *funcSvc) Name() string {
 }
 
 // Init 初始化
-func (f *funcSvc) Init() (err error) {
-	return f.cc.Init()
+func (f *funcSvc) Init(s Stoper) (err error) {
+	return f.cc.Init(s)
 }
 
 // Start 启动
-func (f *funcSvc) Start() (err error) {
-	return f.cc.Start()
+func (f *funcSvc) Start(s Stoper) (err error) {
+	return f.cc.Start(s)
 }
 
 // Stop 关闭

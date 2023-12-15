@@ -1,51 +1,108 @@
 package app
 
 import (
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
 )
 
+//go:generate mockgen -source app.go -destination ../testpkg/mock_app/mock_stoper.go
+type Stoper interface {
+	Stop()
+	IsStop() bool
+	GetStopChan() <-chan struct{}
+}
+
 // Application 接口.是service容器.
 // 主要负责调度 service.(init,config,start,stop,finish)
 type Application struct {
-	svc Service
+	svc  Service
+	stop chan struct{}
+	sign <-chan os.Signal
 }
 
 // CreateApp 新建应用
 func CreateApp(svc Service) *Application {
 	return &Application{
-		svc: svc,
+		svc:  svc,
+		stop: make(chan struct{}),
 	}
 }
 
 // Run 运行
 func (app *Application) Run() (err error) {
 	svr := app.svc
+	app.sign = StopSignal()
+	go func() {
+		select {
+		case <-app.sign:
+			app.Stop()
+		case <-app.stop:
+			return
+		}
+	}()
 	// 服务初始化
-	err = svr.Init()
+	err = svr.Init(app)
 	if err != nil {
 		return
 	}
 	// 服务卸载清理
 	defer svr.Finish()
+	// 已经异步停止服务
+	if app.IsStop() {
+		return
+	}
 	// 服务启动
-	err = svr.Start()
+	err = svr.Start(app)
 	if err != nil {
 		return
 	}
 	// 服务停止
 	defer svr.Stop()
+	// 已经异步停止服务
+	if app.IsStop() {
+		return
+	}
+	log.Println("run app success")
 	// 等待停止信号
-	WaitStopSignal()
+	select {
+	case <-app.sign:
+	case <-app.stop:
+	}
 	return
 }
 
-// WaitStopSignal 等待停止信号函数
-var WaitStopSignal = func() {
+func (app *Application) Stop() {
+	// 防止多个服务调用Stop导致chan阻塞
+	select {
+	case <-app.stop:
+	default:
+		close(app.stop)
+	}
+}
+
+func (app *Application) IsStop() bool {
+	select {
+	case <-app.stop:
+		return true
+	case <-app.sign:
+		app.Stop()
+		return true
+	default:
+		return false
+	}
+}
+
+func (app *Application) GetStopChan() <-chan struct{} {
+	return app.stop
+}
+
+// StopSignal 停止信号函数
+var StopSignal = func() <-chan os.Signal {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGINT, syscall.SIGKILL, syscall.SIGTERM)
-	<-c
+	return c
 }
 
 //命令man 7 signal提供了官方的信号介绍。

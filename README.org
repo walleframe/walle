@@ -7,26 +7,22 @@ walle目标灵活配置. 高性能的服务框架.开发中...
 #+end_quote
 
 * 开发依赖工具
- - protoc 需要手动安装
+
 #+begin_src shell
 # mock接口生成
 go install github.com/golang/mock/mockgen@v1.6.0
 # 代码生成(option,string,struct => interface)
 go install github.com/aggronmagi/gogen@latest
-# protobuf 生成go代码 使用gogofaster
-# go install github.com/golang/protobuf/protoc-gen-go@latest
-go install github.com/gogo/protobuf/protoc-gen-gogofaster@latest
 # walle 命令行工具(解析wproto,excel等)
 go install github.com/aggronmagi/wctl@latest
-# wctl插件 wproto => protobuf 格式转换
-go install github.com/aggronmagi/wplugins/cmd/toproto@latest
+# wctl插件 wpb 消息生成,兼容protobuf. zap接口生成.
+go install github.com/aggronmagi/wplugins/cmd/wpb@latest
 # wctl插件 生成rpc代码
 go install github.com/aggronmagi/wplugins/cmd/wrpc@lates
-# wctl插件 为pb结构体生成zap日志文件
-go install github.com/aggronmagi/wplugins/cmd/wzap@latest
 # wctl插件 redis代码
+go install github.com/aggronmagi/wplugins/cmd/wredis@latest
 # wctl插件 mysql代码
-# wctl插件 excel代码
+# wctl插件 excel代码 wctl
 # wctl插件 项目代码
 #+end_src
 * 进度
@@ -101,40 +97,24 @@ type ProtocolWraper interface {
 默认的 ~Codec~ 依赖wpb生成的代码。如使用gogo可以使用 ~message.ProtobufCodec~ 替换。使用google protobuf 请自行定义。
 * 网络层
 [[./doc/network.org][网络层详细文档]]
+* 封装服务
 
-网络层:
- 1. 底层接口. io层，只提供系统层级交互. read/write
- 2. 中层接口. process层，定制处理流程. 已完成
- 3. 高层接口. 业务逻辑层.
-    手写代码,后续会分为2层. 
-    1. 生成代码层
-    2. 自定义逻辑层
-[[./doc/img/network.png]]
+|  id范围 | 定义         |
+|---------+--------------|
+|   0-100 | 基础组件     |
+| 101-200 | 内部工具组件 |
+| 201-500 | 业务组件     |
+|    900+ | 对外接口     |
 
-Process层:
-[[./doc/img/process.png]]
-
-* 源码目录
-#+begin_example
-.
-├── app              - 应用程序封装。确保启动顺序与正确退出
-├── example          - 代码示例
-├── internal
-│   └── util
-│       └── test     - 用于测试函数调用顺序，调用参数等。
-├── net
-│   ├── iface        - 网络接口定义
-│   ├── packet       - 网络底层包定义
-│   ├── process      - process层处理封装
-│   ├── discovery    - 服务注册发现
-│   ├── clientproxy  - 客户端代理实现。
-│   ├── gnet         - gnet封装
-│   ├── gotcp        - net/tcp 包封装
-│   ├── kcp          - kcp 封装（实际只是gotcp包参数封装）
-│   └── ws           - websocket封装 
-├── util             - 辅助工具代码
-│   └── rtimer       - tars timewheel 代码
-├── kvstore          - kv接口封装
-│   └── etcd         - etcd kv接口封装
-└── zaplog           - 日志封装
-#+end_example
+已封装服务组件整理
+| 组件         | 优先级 | 描述                           |
+|--------------+--------+--------------------------------|
+| configcentra |     -1 | 配置中心服务(启动配置文件解析) |
+| wlogger      |      1 | 日志文件                       |
+| etcdstore    |     10 | etcd存储                       |
+| xlsxmgr      |     20 | excel配置管理器                |
+| dbmgr        |     30 | 数据库，redis等链接管理        |
+| metrics      |    100 | prometheus 监控告警组件        |
+| rpcclient    |    180 | rpc客户端链接                  |
+| rpcserver    |    910 | rpc服务器                      |
+~xmain.RegisterService~ 默认使用优先级 ~500~ ，自定义优先级使用 ~xmain.RegisterServiceByPriority~
