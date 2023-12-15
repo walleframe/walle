@@ -9,10 +9,10 @@ import (
 	reflect "reflect"
 	time "time"
 
+	gomock "github.com/golang/mock/gomock"
 	process "github.com/walleframe/walle/process"
 	metadata "github.com/walleframe/walle/process/metadata"
 	zaplog "github.com/walleframe/walle/zaplog"
-	gomock "github.com/golang/mock/gomock"
 	zap "go.uber.org/zap"
 )
 

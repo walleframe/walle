@@ -8,8 +8,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	discovery "github.com/walleframe/walle/network/discovery"
 	gomock "github.com/golang/mock/gomock"
+	discovery "github.com/walleframe/walle/network/discovery"
 )
 
 // MockDiscovery is a mock of Discovery interface.

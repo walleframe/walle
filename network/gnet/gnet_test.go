@@ -47,7 +47,7 @@ func TestMain(m *testing.M) {
 
 func TestGoTCPClient(t *testing.T) {
 	cli, err := NewClient(
-		WithClientOptionsAddr(fmt.Sprintf("localhost:%d", bp)),
+		WithClientOptionAddr(fmt.Sprintf("localhost:%d", bp)),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -85,7 +85,7 @@ func TestGoTCPClient(t *testing.T) {
 		assert.Nil(t, err, "async add error")
 		assert.EqualValues(t, 190, rs.Value, "async add result")
 		wg.Done()
-	}, rpc.WithAsyncCallOptionsTimeout(time.Second))
+	}, rpc.WithAsyncCallOptionTimeout(time.Second))
 	wg.Wait()
 
 	err = cli.Close()
@@ -95,7 +95,7 @@ func TestGoTCPClient(t *testing.T) {
 
 func BenchmarkGoTCPClient(b *testing.B) {
 	cli, err := NewClient(
-		WithClientOptionsAddr(fmt.Sprintf("localhost:%d", bp)),
+		WithClientOptionAddr(fmt.Sprintf("localhost:%d", bp)),
 	)
 	if err != nil {
 		panic(err)

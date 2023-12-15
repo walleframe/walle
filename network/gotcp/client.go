@@ -165,8 +165,8 @@ func NewClient(opts ...ClientOption) (_ Client, err error) {
 // NOTE: you should rewrite this function for custom set option
 func NewClientForProxy(net, addr string, inner *process.InnerOptions) (Client, error) {
 	return NewClientEx(inner, NewClientOptions(
-		WithClientOptionsNetwork(net),
-		WithClientOptionsAddr(addr),
+		WithClientOptionNetwork(net),
+		WithClientOptionAddr(addr),
 	))
 }
 

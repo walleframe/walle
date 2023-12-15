@@ -88,7 +88,7 @@ func TestProcess_Call(t *testing.T) {
 				SrcContext: ctx,
 			},
 			"kk", testRQ, rs, NewCallOptions(
-				WithCallOptionsMetadata(
+				WithCallOptionMetadata(
 					metadata.Pairs("k", "v", "n", "10"),
 				),
 			),
@@ -171,15 +171,15 @@ func TestProcess_AsyncCall(t *testing.T) {
 			assert.EqualValues(t, testRS, rs, "respond value")
 		},
 		NewAsyncCallOptions(
-			WithAsyncCallOptionsMetadata(
+			WithAsyncCallOptionMetadata(
 				metadata.Pairs("k", "v", "n", "10"),
 			),
-			WithAsyncCallOptionsResponseFilter(func(ctx process.Context, req, rsp interface{}) {
+			WithAsyncCallOptionResponseFilter(func(ctx process.Context, req, rsp interface{}) {
 				f.Call("filter-before")
 				ctx.Next(ctx)
 				f.Call("filter-after")
 			}),
-			WithAsyncCallOptionsWaitFilter(func(await func()) {
+			WithAsyncCallOptionWaitFilter(func(await func()) {
 				go await()
 			}),
 		),
@@ -229,7 +229,7 @@ func TestProcess_Notify(t *testing.T) {
 	_ = p
 
 	err = p.Notify(&process.WrapContext{}, "kk", testMsg, NewNoticeOptions(
-		WithNoticeOptionsMetadata(
+		WithNoticeOptionMetadata(
 			metadata.Pairs("k", "v", "n", "10"),
 		),
 	))

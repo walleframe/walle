@@ -61,3 +61,55 @@ func (mr *MockCodecMockRecorder) Unmarshal(data, v interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Unmarshal", reflect.TypeOf((*MockCodec)(nil).Unmarshal), data, v)
 }
+
+// MockMessage is a mock of Message interface.
+type MockMessage struct {
+	ctrl     *gomock.Controller
+	recorder *MockMessageMockRecorder
+}
+
+// MockMessageMockRecorder is the mock recorder for MockMessage.
+type MockMessageMockRecorder struct {
+	mock *MockMessage
+}
+
+// NewMockMessage creates a new mock instance.
+func NewMockMessage(ctrl *gomock.Controller) *MockMessage {
+	mock := &MockMessage{ctrl: ctrl}
+	mock.recorder = &MockMessageMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockMessage) EXPECT() *MockMessageMockRecorder {
+	return m.recorder
+}
+
+// MarshalObject mocks base method.
+func (m *MockMessage) MarshalObject() ([]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarshalObject")
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// MarshalObject indicates an expected call of MarshalObject.
+func (mr *MockMessageMockRecorder) MarshalObject() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarshalObject", reflect.TypeOf((*MockMessage)(nil).MarshalObject))
+}
+
+// UnmarshalObject mocks base method.
+func (m *MockMessage) UnmarshalObject(data []byte) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UnmarshalObject", data)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UnmarshalObject indicates an expected call of UnmarshalObject.
+func (mr *MockMessageMockRecorder) UnmarshalObject(data interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnmarshalObject", reflect.TypeOf((*MockMessage)(nil).UnmarshalObject), data)
+}

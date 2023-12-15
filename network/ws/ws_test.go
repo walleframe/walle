@@ -87,7 +87,7 @@ func TestGoTCPClient(t *testing.T) {
 		assert.Nil(t, err, "async add error")
 		assert.EqualValues(t, 190, rs.Value, "async add result")
 		wg.Done()
-	}, rpc.WithAsyncCallOptionsTimeout(time.Second))
+	}, rpc.WithAsyncCallOptionTimeout(time.Second))
 	wg.Wait()
 
 	err = cli.Close()

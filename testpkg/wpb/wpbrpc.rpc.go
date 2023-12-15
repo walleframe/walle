@@ -20,13 +20,19 @@ const (
 
 type WSvcService interface {
 	// add method
+
 	Add(ctx network.SessionContext, rq *AddRq, rs *AddRs) (err error)
 	// mul method
+
 	Mul(ctx network.SessionContext, rq *MulRq, rs *MulRs) (err error)
 	// will return error
+
 	Re(ctx network.SessionContext, rq *AddRq, rs *AddRs) (err error)
+	// oneway
+
 	CallOneWay(ctx network.SessionContext, rq *AddRq) (err error)
 	// notify fun
+
 	NotifyFunc(ctx network.SessionContext, rq *AddRq) (err error)
 }
 
@@ -41,16 +47,22 @@ func RegisterWSvcService(router process.Router, s WSvcService) {
 
 type WSvcClient interface {
 	// add method
+
 	Add(ctx context.Context, rq *AddRq, opts ...rpc.CallOption) (rs *AddRs, err error)
 	AddAsync(ctx context.Context, rq *AddRq, resp func(ctx process.Context, rs *AddRs, err error), opts ...rpc.AsyncCallOption) (err error)
 	// mul method
+
 	Mul(ctx context.Context, rq *MulRq, opts ...rpc.CallOption) (rs *MulRs, err error)
 	MulAsync(ctx context.Context, rq *MulRq, resp func(ctx process.Context, rs *MulRs, err error), opts ...rpc.AsyncCallOption) (err error)
 	// will return error
+
 	Re(ctx context.Context, rq *AddRq, opts ...rpc.CallOption) (rs *AddRs, err error)
 	ReAsync(ctx context.Context, rq *AddRq, resp func(ctx process.Context, rs *AddRs, err error), opts ...rpc.AsyncCallOption) (err error)
+	// oneway
+
 	CallOneWay(ctx context.Context, rq *AddRq, opts ...rpc.CallOption) (err error)
 	// notify fun
+
 	NotifyFunc(ctx context.Context, rq *AddRq, opts ...rpc.NoticeOption) (err error)
 }
 

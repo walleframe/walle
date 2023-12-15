@@ -13,10 +13,13 @@ import (
 )
 
 // test message
+
 type TestMsg struct {
 	// int value
+
 	V1 int32 `json:"v1,omitempty"`
 	// string value
+
 	V2 string `json:"v2,omitempty"`
 }
 
@@ -119,10 +122,13 @@ func LogArrayTestMsg(name string, v []*TestMsg) zap.Field {
 }
 
 // multiply rq
+
 type MulRq struct {
 	// mul a
+
 	A int32 `json:"a,omitempty"`
 	// mul b
+
 	B int32 `json:"b,omitempty"`
 }
 
@@ -225,8 +231,10 @@ func LogArrayMulRq(name string, v []*MulRq) zap.Field {
 }
 
 // multiply result
+
 type MulRs struct {
 	// mul result
+
 	R int32 `json:"r,omitempty"`
 }
 
@@ -311,8 +319,10 @@ func LogArrayMulRs(name string, v []*MulRs) zap.Field {
 }
 
 // add request
+
 type AddRq struct {
 	// add params
+
 	Params []int64 `json:"params,omitempty"`
 }
 
@@ -435,8 +445,10 @@ func LogArrayAddRq(name string, v []*AddRq) zap.Field {
 }
 
 // add reply
+
 type AddRs struct {
 	// add result
+
 	Value int64 `json:"value,omitempty"`
 }
 

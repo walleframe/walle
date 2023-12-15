@@ -18,8 +18,8 @@ func main() {
 	// zaplog.SetFrameLogger(zaplog.GetLogicLogger())
 
 	cli, err := gotcp.NewClient(
-		gotcp.WithClientOptionsAddr(fmt.Sprintf("localhost:%d", 12345)),
-		gotcp.WithClientOptionsDialer(kcp.GoTCPClientOptionDialer),
+		gotcp.WithClientOptionAddr(fmt.Sprintf("localhost:%d", 12345)),
+		gotcp.WithClientOptionDialer(kcp.GoTCPClientOptionDialer),
 	)
 	if err != nil {
 		util.PanicIfError(err)

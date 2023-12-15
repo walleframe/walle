@@ -24,11 +24,11 @@ func NewService(name string, opt ...ServerOption) app.Service {
 func (svc *WsService) Name() string {
 	return svc.name
 }
-func (svc *WsService) Init() (err error) {
+func (svc *WsService) Init(s app.Stoper) (err error) {
 	svc.ln, err = net.Listen("tcp", svc.svr.opts.Addr)
 	return
 }
-func (svc *WsService) Start() (err error) {
+func (svc *WsService) Start(s app.Stoper) (err error) {
 	go svc.svr.Serve(svc.ln)
 	return
 }

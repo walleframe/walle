@@ -7,8 +7,8 @@ package mock_process
 import (
 	reflect "reflect"
 
-	process "github.com/walleframe/walle/process"
 	gomock "github.com/golang/mock/gomock"
+	process "github.com/walleframe/walle/process"
 )
 
 // MockRouter is a mock of Router interface.

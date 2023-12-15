@@ -63,9 +63,10 @@ call:
 	mul(mul_rq) mul_rs;
 	// will return error 
 	re(add_rq) add_rs;
-	call_one_way(add_rq);
+	// oneway
+	call_one_way(add_rq) void;
 notify:
 	// notify fun
-	notify_func(add_rq);
+	notify_func(add_rq) void;
 	
 }

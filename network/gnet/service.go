@@ -24,10 +24,10 @@ func NewService(name string, opt ...ServerOption) app.Service {
 func (svc *GNetService) Name() string {
 	return svc.name
 }
-func (svc *GNetService) Init() (err error) {
+func (svc *GNetService) Init(s app.Stoper) (err error) {
 	return
 }
-func (svc *GNetService) Start() (err error) {
+func (svc *GNetService) Start(s app.Stoper) (err error) {
 	svc.svr.initNotify = make(chan error)
 	go svc.svr.Run("")
 	err = <-svc.svr.initNotify

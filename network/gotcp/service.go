@@ -24,10 +24,10 @@ func NewService(name string, opt ...ServerOption) app.Service {
 func (svc *GoTcpService) Name() string {
 	return svc.name
 }
-func (svc *GoTcpService) Init() (err error) {
+func (svc *GoTcpService) Init(s app.Stoper) (err error) {
 	return svc.svr.Listen("")
 }
-func (svc *GoTcpService) Start() (err error) {
+func (svc *GoTcpService) Start(s app.Stoper) (err error) {
 	go svc.svr.Serve(nil)
 	return
 }

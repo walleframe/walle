@@ -8,9 +8,9 @@ import (
 	context "context"
 	reflect "reflect"
 
+	gomock "github.com/golang/mock/gomock"
 	balancer "github.com/walleframe/walle/network/balancer"
 	discovery "github.com/walleframe/walle/network/discovery"
-	gomock "github.com/golang/mock/gomock"
 )
 
 // MockPickerBuilder is a mock of PickerBuilder interface.

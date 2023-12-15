@@ -1,8 +1,10 @@
 package testpkg
 
 import (
+	"os"
 	"runtime"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/walleframe/walle/app"
@@ -18,8 +20,14 @@ type FuncCall interface {
 func Run(svc app.Service) func() {
 	wg := sync.WaitGroup{}
 	wg.Add(1)
-	app.WaitStopSignal = func() {
-		wg.Wait()
+	app.StopSignal = func() <-chan os.Signal {
+		c := make(chan os.Signal, 1)
+		// signal.Notify(c, syscall.SIGINT, syscall.SIGKILL, syscall.SIGTERM)
+		go func() {
+			wg.Wait()
+			c <- syscall.SIGINT
+		}()
+		return c
 	}
 	go app.CreateApp(svc).Run()
 	runtime.Gosched()

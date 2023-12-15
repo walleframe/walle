@@ -8,9 +8,9 @@ import (
 	context "context"
 	reflect "reflect"
 
+	gomock "github.com/golang/mock/gomock"
 	rpc "github.com/walleframe/walle/network/rpc"
 	process "github.com/walleframe/walle/process"
-	gomock "github.com/golang/mock/gomock"
 )
 
 // MockRPCProcesser is a mock of RPCProcesser interface.

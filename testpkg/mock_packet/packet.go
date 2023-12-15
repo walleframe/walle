@@ -7,10 +7,10 @@ package mock_packet
 import (
 	reflect "reflect"
 
+	gomock "github.com/golang/mock/gomock"
 	message "github.com/walleframe/walle/process/message"
 	metadata "github.com/walleframe/walle/process/metadata"
 	packet "github.com/walleframe/walle/process/packet"
-	gomock "github.com/golang/mock/gomock"
 )
 
 // MockEncoder is a mock of Encoder interface.
