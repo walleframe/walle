@@ -8,11 +8,16 @@ import (
 	"github.com/walleframe/walle/app"
 )
 
+type cacheValue struct {
+	cv  ConfigValue
+	ntf []ConfigUpdateNotify
+}
+
 // ConfigCentraService 应用程序配置
 type ConfigCentraService struct {
 	app.NoopService
 	start   atomic.Bool
-	values  []ConfigValue
+	values  []cacheValue
 	updates []ConfigUpdateNotify
 	flags   []FlagNotify
 }
@@ -44,25 +49,15 @@ func (svc *ConfigCentraService) Init(s app.Stoper) (err error) {
 		return errors.New("not set config centra backend")
 	}
 
+	for _, v := range svc.values {
+		ConfigCentraBackend.RegisterConfig(v.cv, v.ntf)
+	}
+	ConfigCentraBackend.WatchConfigUpdate(svc.updates)
+
 	// config centra backend init
 	err = ConfigCentraBackend.Init(s)
 	if err != nil {
 		return err
-	}
-
-	// set default value
-	for _, v := range svc.values {
-		v.SetDefaultValue(ConfigCentraBackend)
-	}
-
-	// read value
-	for _, v := range svc.values {
-		v.RefreshValue(ConfigCentraBackend)
-	}
-
-	// notify
-	for _, v := range svc.updates {
-		v(ConfigCentraBackend)
 	}
 
 	return

@@ -11,11 +11,16 @@ import (
 
 type ConfigCentra interface {
 	// backend service interface
-	Init(s app.Stoper, updateCallback func(cc ConfigCentra)) (err error)
+	Init(s app.Stoper) (err error)
 	Start(s app.Stoper) error
 	Stop()
 	Finish()
-	// value interface
+	// register custom config value
+	RegisterConfig(v ConfigValue, ntf []ConfigUpdateNotify)
+	// watch config update
+	WatchConfigUpdate(ntf []ConfigUpdateNotify)
+
+	// static value interface
 	SetDefault(key string, doc string, value interface{})
 	GetString(key string) string
 	GetBool(key string) bool
@@ -53,14 +58,6 @@ func init() {
 	bootstrap.RegisterServiceByPriority(-1, gConfigManager) // config manager (load config from file)
 }
 
-// WatchConfigUpdate 监控配置更新
-func WatchConfigUpdate(ntf ConfigUpdateNotify) {
-	if gConfigManager.start.Load() {
-		log.Panic("service already start, CAN NOT watch config any more.")
-	}
-	gConfigManager.updates = append(gConfigManager.updates, ntf)
-}
-
 // RegisterFlagNotify 注册flag处理
 func RegisterFlagNotify(ntf FlagNotify) {
 	if gConfigManager.start.Load() {
@@ -70,9 +67,20 @@ func RegisterFlagNotify(ntf FlagNotify) {
 }
 
 // RegisterConfig 注册配置
-func RegisterConfig(cfg ConfigValue) {
+func RegisterConfig(cfg ConfigValue, ntf ...ConfigUpdateNotify) {
 	if gConfigManager.start.Load() {
 		log.Panic("service already start, CAN NOT register config any more.")
 	}
-	gConfigManager.values = append(gConfigManager.values, cfg)
+	gConfigManager.values = append(gConfigManager.values, cacheValue{
+		cv:  cfg,
+		ntf: ntf,
+	})
+}
+
+// WatchConfigUpdate 监控配置更新
+func WatchConfigUpdate(ntf ConfigUpdateNotify) {
+	if gConfigManager.start.Load() {
+		log.Panic("service already start, CAN NOT watch config any more.")
+	}
+	gConfigManager.updates = append(gConfigManager.updates, ntf)
 }
