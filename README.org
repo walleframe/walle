@@ -107,14 +107,19 @@ type ProtocolWraper interface {
 |    900+ | 对外接口     |
 
 已封装服务组件整理
-| 组件         | 优先级 | 描述                           |
-|--------------+--------+--------------------------------|
-| configcentra |     -1 | 配置中心服务(启动配置文件解析) |
-| wlogger      |      1 | 日志文件                       |
-| etcdstore    |     10 | etcd存储                       |
-| xlsxmgr      |     20 | excel配置管理器                |
-| dbmgr        |     30 | 数据库，redis等链接管理        |
-| metrics      |    100 | prometheus 监控告警组件        |
-| rpcclient    |    180 | rpc客户端链接                  |
-| rpcserver    |    910 | rpc服务器                      |
+| 组件         | 优先级 | 描述                           | 代码仓库                        | 工具        |
+|--------------+--------+--------------------------------+---------------------------------+-------------|
+| configcentra |     -1 | 配置中心服务(启动配置文件解析) |                            | gogen cfgen |
+| wlogger      |      1 | 日志文件                       | walle                           | wpb         |
+| etcdstore    |     10 | etcd存储                       |                                 | x           |
+| xlsxmgr      |     20 | excel配置管理器                |                                 | wctl        |
+| dbmgr        |     30 | 数据库等链接管理               |                                 |             |
+| redis        |     40 | redis链接管理                  | github.com/walleframe/svc_redis | wredis      |
+| metrics      |    100 | prometheus 监控告警组件        |                                 |             |
+| rpcclient    |    180 | rpc客户端链接                  |                                 |             |
+| rpcserver    |    910 | rpc服务器                      |                                 |             |
 ~xmain.RegisterService~ 默认使用优先级 ~500~ ，自定义优先级使用 ~xmain.RegisterServiceByPriority~
+** config centra
+** xlsx manager
+** redis 
+** mysql 

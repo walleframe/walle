@@ -11,7 +11,7 @@ import (
 
 type ConfigCentra interface {
 	// backend service interface
-	Init(s app.Stoper) (err error)
+	Init(s app.Stoper, updateCallback func(cc ConfigCentra)) (err error)
 	Start(s app.Stoper) error
 	Stop()
 	Finish()
