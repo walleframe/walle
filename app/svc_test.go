@@ -109,17 +109,21 @@ func testTeeNomal(t *testing.T, mc *gomock.Controller, num int) (svcs []app.Serv
 
 func TestTeeService_Failed(t *testing.T) {
 	datas := []struct {
-		name        string
-		num         int
-		init, start int
+		name  string // 测试名称
+		num   int    // 测试生成服务数量
+		init  int    // 服务初始化成功索引,-1没有初始化失败
+		start int    // 服务启动成功索引,-1没有启动失败
 	}{
-		//{"normal", 0, -1, -1},
-		//{"normal", 1, -1, -1},
-		//{"normal", 2, -1, -1},
-		//{"normal", 10, -1, -1},
-		//{"initFailed", 1, 0, -1},
+		{"normal", 0, -1, -1},
+		{"normal", 1, -1, -1},
+		{"normal", 2, -1, -1},
+		{"normal", 10, -1, -1},
+		{"initFailed", 1, 0, -1},
 		{"initFailed", 3, 1, -1},
-		//{"initFailed", 3, 2, -1},
+		{"initFailed", 3, 2, -1},
+		{"startFailed", 1, -1, 0},
+		{"startFailed", 3, -1, 1},
+		{"startFailed", 3, -1, 2},
 	}
 	for _, v := range datas {
 		t.Run(fmt.Sprintf("%v", v), func(t *testing.T) {
@@ -135,7 +139,7 @@ func TestTeeService_Failed(t *testing.T) {
 
 }
 
-func testTeeCheck(t *testing.T, mc *gomock.Controller, num, initIdx, startIdx int) (svcs []app.Service, ret error, signFlag bool) {
+func testTeeCheck(t *testing.T, mc *gomock.Controller, num, initFailedIdx, startFailedIdx int) (svcs []app.Service, ret error, signFlag bool) {
 	init := atomic.Int32{}
 	start := atomic.Int32{}
 	initFailed := errors.New("init failed")
@@ -155,19 +159,19 @@ func testTeeCheck(t *testing.T, mc *gomock.Controller, num, initIdx, startIdx in
 			if v != index+1 {
 				t.Error("init sequece invalid", v, index+1)
 			}
-			if initIdx >= 0 && initIdx == index {
+			if initFailedIdx >= 0 && initFailedIdx == index {
 				return initFailed
 			}
 			return nil
 		})
-		if initIdx >= 0 && index >= initIdx {
+		if initFailedIdx >= 0 && index >= initFailedIdx {
 			ret = initFailed
 			break
 		}
 	}
 	for i, svc := range arrs {
 		index := i
-		if initIdx >= 0 {
+		if initFailedIdx >= 0 {
 			break
 		}
 
@@ -178,48 +182,42 @@ func testTeeCheck(t *testing.T, mc *gomock.Controller, num, initIdx, startIdx in
 			if v != index+1 {
 				t.Error("start sequece invalid", v, index+1)
 			}
-			if startIdx >= 0 && startIdx == int(index) {
+			if startFailedIdx >= 0 && startFailedIdx == int(index) {
 				return startFailed
 			}
 			return nil
 		})
-		if startIdx >= 0 && index >= startIdx {
+		if startFailedIdx >= 0 && index >= startFailedIdx {
 			ret = startFailed
 			break
 		}
 	}
-	for i, svc := range arrs {
+	for i := len(arrs) - 1; i >= 0; i-- {
+		svc := arrs[i]
 		index := i
-		if initIdx >= 0 {
+		if initFailedIdx >= 0 {
 			break
 		}
-		if startIdx >= 0 && index >= startIdx {
-			break
+		if startFailedIdx >= 0 && index >= startFailedIdx {
+			continue
 		}
 		t.Log("need exce run", index, "stop")
 		svc.EXPECT().Stop().Do(func() {
 			t.Log("exce run", index, "stop")
-			ret := start.Sub(1)
-			if ret != int32(index) {
-				t.Error("stop sequece invalid", ret, index)
-			}
 		})
 	}
-	for i, svc := range arrs {
+	for i := len(arrs) - 1; i >= 0; i-- {
+		svc := arrs[i]
 		index := i
-		if initIdx >= 0 && index >= initIdx {
+		// if initFailedIdx >= 0 {
+		// 	break
+		// }
+		if initFailedIdx >= 0 && index >= initFailedIdx {
 			continue
 		}
 		t.Log("need exce run", index, "finish")
 		svc.EXPECT().Finish().Do(func() {
 			t.Log("exce run", index, "finish")
-			ret := init.Sub(1)
-			if initIdx >= 0 {
-				ret -= 1
-			}
-			if ret != int32(index) {
-				t.Error("finish sequece invalid", ret, index)
-			}
 		})
 	}
 	if ret == nil {

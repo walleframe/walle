@@ -65,6 +65,10 @@ func runApp(t *testing.T, a *app.Application, signFlag bool) (err error) {
 		t.Log("signal stop")
 		a.Stop()
 	}
+	time.AfterFunc(time.Second*5, func() {
+		a.Stop()
+		t.Error("timeout")
+	})
 	t.Log("wait app stop")
 	wg.Wait()
 	return

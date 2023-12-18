@@ -39,11 +39,12 @@ func (t *teeService) Name() string {
 // Init 初始化
 func (t *teeService) Init(s Stoper) (err error) {
 	for _, v := range t.services {
-		log.Printf("service %s wait init %#v\n", v.Name(), v)
+		log.Printf("service %s wait init %T\n", v.Name(), v)
 		err = v.Init(s)
 		if err != nil {
 			err = fmt.Errorf("service %s init failed:%w", v.Name(), err)
 			log.Println(err)
+			t.Finish()
 			return
 		}
 		t.initd = append(t.initd, v)
@@ -58,11 +59,12 @@ func (t *teeService) Init(s Stoper) (err error) {
 // Start 启动
 func (t *teeService) Start(s Stoper) (err error) {
 	for _, v := range t.initd {
-		log.Println("service", v.Name(), "wait start", fmt.Sprintf("%#v", v))
+		log.Println("service", v.Name(), "wait start", fmt.Sprintf("%T", v))
 		err = v.Start(s)
 		if err != nil {
 			err = fmt.Errorf("service %s start failed:%w", v.Name(), err)
 			log.Println(err)
+			t.Stop()
 			return
 		}
 		t.started = append(t.started, v)

@@ -21,22 +21,22 @@ import (
 // )
 
 var (
-	// // ErrBackendNotSupported is thrown when the backend k/v store is not supported by libkv
-	// ErrBackendNotSupported = errors.New("Backend storage not supported yet, please choose one of")
-	// // ErrCallNotSupported is thrown when a method is not implemented/supported by the current backend
-	// ErrCallNotSupported = errors.New("The current call is not supported with this backend")
-	// // ErrNotReachable is thrown when the API cannot be reached for issuing common store operations
-	// ErrNotReachable = errors.New("Api not reachable")
-	// // ErrCannotLock is thrown when there is an error acquiring a lock on a key
-	// ErrCannotLock = errors.New("Error acquiring the lock")
+	// ErrBackendNotSupported is thrown when the backend k/v store is not supported by libkv
+	ErrBackendNotSupported = errors.New("Backend storage not supported yet, please choose one of")
+	// ErrCallNotSupported is thrown when a method is not implemented/supported by the current backend
+	ErrCallNotSupported = errors.New("The current call is not supported with this backend")
+	// ErrNotReachable is thrown when the API cannot be reached for issuing common store operations
+	ErrNotReachable = errors.New("Api not reachable")
+	// ErrCannotLock is thrown when there is an error acquiring a lock on a key
+	ErrCannotLock = errors.New("Error acquiring the lock")
 	// ErrKeyModified is thrown during an atomic operation if the index does not match the one in the store
-	// ErrKeyModified = errors.New("Unable to complete atomic operation, key modified")
-	// // ErrKeyNotFound is thrown when the key is not found in the store during a Get operation
+	ErrKeyModified = errors.New("Unable to complete atomic operation, key modified")
+	// ErrKeyNotFound is thrown when the key is not found in the store during a Get operation
 	ErrKeyNotFound = errors.New("Key not found in store")
-	// // ErrPreviousNotSpecified is thrown when the previous value is not specified for an atomic operation
-	// ErrPreviousNotSpecified = errors.New("Previous K/V pair should be provided for the Atomic operation")
-	// // ErrKeyExists is thrown when the previous value exists in the case of an AtomicPut
-	// ErrKeyExists = errors.New("Previous K/V pair exists, cannot complete Atomic operation")
+	// ErrPreviousNotSpecified is thrown when the previous value is not specified for an atomic operation
+	ErrPreviousNotSpecified = errors.New("Previous K/V pair should be provided for the Atomic operation")
+	// ErrKeyExists is thrown when the previous value exists in the case of an AtomicPut
+	ErrKeyExists = errors.New("Previous K/V pair exists, cannot complete Atomic operation")
 )
 
 // // Config contains the options for a storage client
@@ -116,6 +116,7 @@ type KVPair struct {
 
 // WriteOptions contains optional request parameters
 // TODO: Write选项合理化配置以及生效
+//
 //go:generate gogen option -n WriteOption -f Write -o option.write.go
 func walleStoreWrite() interface{} {
 	return map[string]interface{}{
@@ -126,6 +127,7 @@ func walleStoreWrite() interface{} {
 
 // LockOptions contains optional request parameters
 // TODO: Lock选项合理化配置以及生效
+//
 //go:generate gogen option -n LockOption -f Lock -o option.lock.go
 func walleStoreLock() interface{} {
 	return map[string]interface{}{
@@ -139,7 +141,7 @@ func walleStoreLock() interface{} {
 }
 
 // TODO: 添加Read选项，合理化配置以及生效
-////go:generate gogen option -n ReadOption -f Read -o option.read.go
+// //go:generate gogen option -n ReadOption -f Read -o option.read.go
 func walleStoreRead() interface{} {
 	return map[string]interface{}{}
 }
