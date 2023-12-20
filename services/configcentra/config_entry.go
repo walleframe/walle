@@ -20,22 +20,27 @@ type ConfigCentra interface {
 	// watch config update
 	WatchConfigUpdate(ntf []ConfigUpdateNotify)
 
+	// object support
+	UseObject() bool
+	SetObject(key string, doc string, obj interface{})
+	GetObject(key string, obj interface{}) (err error)
+
 	// static value interface
 	SetDefault(key string, doc string, value interface{})
-	GetString(key string) string
-	GetBool(key string) bool
-	GetInt(key string) int
-	GetInt32(key string) int32
-	GetInt64(key string) int64
-	GetUint(key string) uint
-	GetUint16(key string) uint16
-	GetUint32(key string) uint32
-	GetUint64(key string) uint64
-	GetFloat64(key string) float64
-	GetTime(key string) time.Time
-	GetDuration(key string) time.Duration
-	GetIntSlice(key string) []int
-	GetStringSlice(key string) []string
+	GetString(key string) (string, error)
+	GetBool(key string) (bool, error)
+	GetInt(key string) (int, error)
+	GetInt32(key string) (int32, error)
+	GetInt64(key string) (int64, error)
+	GetUint(key string) (uint, error)
+	GetUint16(key string) (uint16, error)
+	GetUint32(key string) (uint32, error)
+	GetUint64(key string) (uint64, error)
+	GetFloat64(key string) (float64, error)
+	GetTime(key string) (time.Time, error)
+	GetDuration(key string) (time.Duration, error)
+	GetIntSlice(key string) ([]int, error)
+	GetStringSlice(key string) ([]string, error)
 }
 
 // 配置中心后端实现接口
@@ -44,7 +49,7 @@ var ConfigCentraBackend ConfigCentra
 // ConfigValue 配置项 配置值
 type ConfigValue interface {
 	SetDefaultValue(vcfg ConfigCentra)
-	RefreshValue(vcfg ConfigCentra)
+	RefreshValue(vcfg ConfigCentra) error
 }
 
 type ConfigUpdateNotify func(ConfigCentra)
