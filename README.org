@@ -104,22 +104,63 @@ type ProtocolWraper interface {
 |   0-100 | 基础组件     |
 | 101-200 | 内部工具组件 |
 | 201-500 | 业务组件     |
-|    900+ | 对外接口     |
+|   1000+ | 对外接口     |
 
 已封装服务组件整理
 | 组件         | 优先级 | 描述                           | 代码仓库                        | 工具        |
 |--------------+--------+--------------------------------+---------------------------------+-------------|
-| configcentra |     -1 | 配置中心服务(启动配置文件解析) |                            | gogen cfgen |
+| configcentra |     -1 | 配置中心服务(启动配置文件解析) |                                 | gogen cfgen |
 | wlogger      |      1 | 日志文件                       | walle                           | wpb         |
-| etcdstore    |     10 | etcd存储                       |                                 | x           |
-| xlsxmgr      |     20 | excel配置管理器                |                                 | wctl        |
+| etcdstore    |     10 | etcd存储                       |                                 |             |
+| xlsxmgr      |     20 | excel配置管理器                | github.com/walleframe/svc_xlsx  | wctl xlsx   |
 | dbmgr        |     30 | 数据库等链接管理               |                                 |             |
 | redis        |     40 | redis链接管理                  | github.com/walleframe/svc_redis | wredis      |
 | metrics      |    100 | prometheus 监控告警组件        |                                 |             |
-| rpcclient    |    180 | rpc客户端链接                  |                                 |             |
-| rpcserver    |    910 | rpc服务器                      |                                 |             |
-~xmain.RegisterService~ 默认使用优先级 ~500~ ，自定义优先级使用 ~xmain.RegisterServiceByPriority~
+| rpcclient    |    180 | rpc客户端链接                  |                                 | wrpc        |
+| rpcserver    |    910 | rpc服务器                      |                                 | wrpc        |
+~bootstrap.RegisterService~ 默认使用优先级 ~500~ ，自定义优先级使用 ~bootstrap.RegisterServiceByPriority~
 ** config centra
+使用配置文件: https://github.com/walleframe/svc_cfgfile
+#+begin_src go
+import (
+	"github.com/walleframe/svc_cfgfile"
+)
+func main() {
+	svc_cfgfile.UseConfigFile()
+}
+#+end_src
+使用etcd做配置中心: https://github.com/walleframe/svc_etcd/ etcdcfg
+#+begin_src go
+import (
+	"github.com/walleframe/svc_etcd/etcdcfg"
+)
+
+func main() {
+	etcdcfg.UseEtcdConfig()
+}
+#+end_src
+
 ** xlsx manager
+github.com/walleframe/svc_xlsx
+
+*** 使用方式
+使用 ~wctl xlsx~ 命令生成xlsx数据和xlsx加载代码. 使用init函数进行使用关系管理.
+
+github.com/walleframe/walle/xlsxmgr 用于管理xlsx配置加载,附带2个从本地加载json数据的插件. 
+
+github.com/walleframe/svc_xlsx 用于服务管理,只要程序中有使用对应的xlsx配置,自动注册加载.
+
+*** 使用etcd读取配置
+
+#+begin_src go
+import (
+	"github.com/walleframe/svc_etcd/etcdplugin"
+)
+
+func main() {
+	xlsxmgr.RegisterXlsxPlugin(etcdplugin.XlsxPlugin)
+}
+#+end_src
+
 ** redis 
 ** mysql 
