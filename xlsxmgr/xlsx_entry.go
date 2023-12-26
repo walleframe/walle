@@ -58,5 +58,5 @@ var registry = pluginRegistry{
 // RegisterXlsxPlugin register xlsx plugin to load data
 var RegisterXlsxPlugin func(plugin XlsxLoadPlugin) = registry.RegisterXlsxPlugin
 
-// RegAutoConfig 注册自动加载配置
+// GetPlugin get plugin 
 var GetPlugin func(name string) (XlsxLoadPlugin, error) = registry.GetPlugin

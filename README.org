@@ -146,7 +146,7 @@ github.com/walleframe/svc_xlsx
 *** 使用方式
 使用 ~wctl xlsx~ 命令生成xlsx数据和xlsx加载代码. 使用init函数进行使用关系管理.
 
-github.com/walleframe/walle/xlsxmgr 用于管理xlsx配置加载,附带2个从本地加载json数据的插件. 
+github.com/walleframe/walle/xlsxmgr 用于管理xlsx配置加载,附带2个从本地加载json数据的插件.(simple 可以通过修过加载文件函数,从embed中加载数据 local用于从本地加载文件后监听变动)
 
 github.com/walleframe/svc_xlsx 用于服务管理,只要程序中有使用对应的xlsx配置,自动注册加载.
 
