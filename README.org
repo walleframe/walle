@@ -22,8 +22,9 @@ go install github.com/aggronmagi/wplugins/cmd/wrpc@lates
 # wctl插件 redis代码
 go install github.com/aggronmagi/wplugins/cmd/wredis@latest
 # wctl插件 mysql代码
-# wctl插件 excel代码 wctl
-# wctl插件 项目代码
+go install github.com/aggronmagi/wplugins/cmd/wdb@lates
+# wctl插件 excel代码
+# wctl xlsx 命令
 #+end_src
 * 进度
 ** DONE 网络层支持以下接口
@@ -38,11 +39,11 @@ go install github.com/aggronmagi/wplugins/cmd/wredis@latest
 ** TODO 工具代码包
  - [ ] gpool
  - [ ] skeleton
-** TODO 代码生成
+** DONE 代码生成
  - [X] excel配置相关
  - [X] rpc、tcp代码
  - [X] redis 代码
- - [ ] mysql
+ - [X] mysql
 ** DONE 优化
  - [X] 客户端链接允许不直接建立链接
  - [X] packet包 独立，不直接使用pb消息（兼容其他格式，比如sproto）
@@ -113,7 +114,7 @@ type ProtocolWraper interface {
 | wlogger      |      1 | 日志文件                       | walle                           | wpb         |
 | etcdstore    |     10 | etcd存储                       |                                 |             |
 | xlsxmgr      |     20 | excel配置管理器                | github.com/walleframe/svc_xlsx  | wctl xlsx   |
-| dbmgr        |     30 | 数据库等链接管理               |                                 |             |
+| dbmgr        |     30 | 数据库等链接管理               | github.com/walleframe/svc_db    | wdb         |
 | redis        |     40 | redis链接管理                  | github.com/walleframe/svc_redis | wredis      |
 | metrics      |    100 | prometheus 监控告警组件        |                                 |             |
 | rpcclient    |    180 | rpc客户端链接                  |                                 | wrpc        |
