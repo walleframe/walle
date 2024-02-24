@@ -14,6 +14,52 @@
 Process层:
 [[./doc/img/process.png]]
 
+** Codec接口约定
+*所有Codec接口Marshal返回的内存，都应该是mempool.Pool()中申请的。*
+
+此约定主要想减少内存拷贝。
+
+~metadata~ 的 ~Codec.Marshal~ 申请的内存，在函数调用处进行Free.
+~message~ 的 ~Codec.Marshal~ 申请的内存，在 ~packet.Pool.Put~ 处释放。
+~packet~ 的 ~Codec.Marshal~ 申请的内存，在 ~packet.Pool.Put~ 处释放。
+~errcode~ 的 ~Codec.Marshal~ 申请的内存，和 ~message~ 一样。
+** 错误
+packege ~errcode~ 用于定义框架中使用的错误结构体。
+
+ ~ErrorResponse~ 不仅仅用于进程内表示错误，还用于网络请求中传递错误。
+
+可以通过实现 ~ErrorCodec~ ， ~ErrorsNew~ 接口来替换内部错误的实现.
+实现之后替换 ~DefaultErrorCodec~ 及 ~DefaultErrorsNew~ 即可。
+这两个接口都是全局的。
+** 网络包 packet
+#+begin_src go
+// Pool reuse packet pool
+type Pool interface {
+	Get() interface{}
+	Put(interface{})
+}
+
+// Codec Use for marshal/unmarshal packet.Packet from bytes
+type Codec interface {
+	Marshal(p interface{}) ([]byte, error)
+	Unmarshal(data []byte, p interface{}) error
+}
+
+// ProtocolWraper wrap all packet operate, use for custom packet struct.
+type ProtocolWraper interface {
+	// unmarshal packet's payload by msg codec
+	PayloadUnmarshal(pkg interface{}, codec message.Codec, obj interface{}) error
+	// marshal packet's payload by msg codec,then set payload binary data into message buf.
+	PayloadMarshal(pkg interface{}, codec message.Codec, payload interface{}) (err error)
+	// new response packet
+	NewResponse(inPkg, outPkg interface{}, md metadata.MD) (err error)
+	// new request packet
+	NewPacket(inPkg interface{}, cmd PacketCmd, uri interface{}, md metadata.MD) (err error)
+}
+#+end_src
+
+默认的 ~Codec~ 依赖wpb生成的代码。如使用gogo可以使用 ~message.ProtobufCodec~ 替换。使用google protobuf 请自行定义。
+
 ** 层级
  1. 底层接口. io层，只提供系统层级交互. read/write
  2. 中层接口. process层，定制处理流程. 已完成

@@ -14,91 +14,18 @@ go install github.com/golang/mock/mockgen@v1.6.0
 # 代码生成(option,string,struct => interface)
 go install github.com/aggronmagi/gogen@latest
 # walle 命令行工具(解析wproto,excel等)
-go install github.com/aggronmagi/wctl@latest
-# wctl插件 wpb 消息生成,兼容protobuf. zap接口生成.
-go install github.com/aggronmagi/wplugins/cmd/wpb@latest
+go install github.com/walleframe/wctl@latest
+# wctl插件 wpb 消息生成,兼容protobuf. zap接口生成. excel代码生成
+go install github.com/walleframe/wplugins/cmd/wpb@latest
 # wctl插件 生成rpc代码
-go install github.com/aggronmagi/wplugins/cmd/wrpc@lates
+go install github.com/walleframe/wplugins/cmd/wrpc@lates
 # wctl插件 redis代码
-go install github.com/aggronmagi/wplugins/cmd/wredis@latest
+go install github.com/walleframe/wplugins/cmd/wredis@latest
 # wctl插件 mysql代码
-go install github.com/aggronmagi/wplugins/cmd/wdb@lates
-# wctl插件 excel代码
-# wctl xlsx 命令
+go install github.com/walleframe/wplugins/cmd/wdb@lates
+# excel代码 使用 wctl xlsx 命令
 #+end_src
-* 进度
-** DONE 网络层支持以下接口
- - [X] gotcp
- - [X] gnet
- - [X] kcp
- - [X] websocket
-** DONE 分布式
- - [X] kvstore（参考libkv接口）
- - [X] 服务注册发现
- - [X] ClientProxy
-** TODO 工具代码包
- - [ ] gpool
- - [ ] skeleton
-** DONE 代码生成
- - [X] excel配置相关
- - [X] rpc、tcp代码
- - [X] redis 代码
- - [X] mysql
-** DONE 优化
- - [X] 客户端链接允许不直接建立链接
- - [X] packet包 独立，不直接使用pb消息（兼容其他格式，比如sproto）
-** DONE 需要调整
-TCPServer等，应该提供注册接口，而不是让外部直接去设置Router，每种设置，提供全局的默认值修改机制。
-* 代码约定
-* 组件替换
-** Codec接口约定
-*所有Codec接口Marshal返回的内存，都应该是mempool.Pool()中申请的。*
-
-此约定主要想减少内存拷贝。
-
-~metadata~ 的 ~Codec.Marshal~ 申请的内存，在函数调用处进行Free.
-~message~ 的 ~Codec.Marshal~ 申请的内存，在 ~packet.Pool.Put~ 处释放。
-~packet~ 的 ~Codec.Marshal~ 申请的内存，在 ~packet.Pool.Put~ 处释放。
-~errcode~ 的 ~Codec.Marshal~ 申请的内存，和 ~message~ 一样。
-** 错误
-packege ~errcode~ 用于定义框架中使用的错误结构体。
-
- ~ErrorResponse~ 不仅仅用于进程内表示错误，还用于网络请求中传递错误。
-
-可以通过实现 ~ErrorCodec~ ， ~ErrorsNew~ 接口来替换内部错误的实现.
-实现之后替换 ~DefaultErrorCodec~ 及 ~DefaultErrorsNew~ 即可。
-这两个接口都是全局的。
-** 网络包 packet
-#+begin_src go
-// Pool reuse packet pool
-type Pool interface {
-	Get() interface{}
-	Put(interface{})
-}
-
-// Codec Use for marshal/unmarshal packet.Packet from bytes
-type Codec interface {
-	Marshal(p interface{}) ([]byte, error)
-	Unmarshal(data []byte, p interface{}) error
-}
-
-// ProtocolWraper wrap all packet operate, use for custom packet struct.
-type ProtocolWraper interface {
-	// unmarshal packet's payload by msg codec
-	PayloadUnmarshal(pkg interface{}, codec message.Codec, obj interface{}) error
-	// marshal packet's payload by msg codec,then set payload binary data into message buf.
-	PayloadMarshal(pkg interface{}, codec message.Codec, payload interface{}) (err error)
-	// new response packet
-	NewResponse(inPkg, outPkg interface{}, md metadata.MD) (err error)
-	// new request packet
-	NewPacket(inPkg interface{}, cmd PacketCmd, uri interface{}, md metadata.MD) (err error)
-}
-#+end_src
-
-默认的 ~Codec~ 依赖wpb生成的代码。如使用gogo可以使用 ~message.ProtobufCodec~ 替换。使用google protobuf 请自行定义。
-* 网络层
-[[./doc/network.org][网络层详细文档]]
-* 封装服务
+* 已封装服务
 
 |  id范围 | 定义         |
 |---------+--------------|
@@ -108,17 +35,17 @@ type ProtocolWraper interface {
 |   1000+ | 对外接口     |
 
 已封装服务组件整理
-| 组件         | 优先级 | 描述                           | 代码仓库                        | 工具        |
-|--------------+--------+--------------------------------+---------------------------------+-------------|
-| configcentra |     -1 | 配置中心服务(启动配置文件解析) |                                 | gogen cfgen |
-| wlogger      |      1 | 日志文件                       | walle                           | wpb         |
-| etcdstore    |     10 | etcd存储                       |                                 |             |
-| xlsxmgr      |     20 | excel配置管理器                | github.com/walleframe/svc_xlsx  | wctl xlsx   |
-| dbmgr        |     30 | 数据库等链接管理               | github.com/walleframe/svc_db    | wdb         |
-| redis        |     40 | redis链接管理                  | github.com/walleframe/svc_redis | wredis      |
-| metrics      |    100 | prometheus 监控告警组件        |                                 |             |
-| rpcclient    |    180 | rpc客户端链接                  |                                 | wrpc        |
-| rpcserver    |    910 | rpc服务器                      |                                 | wrpc        |
+| 组件         | 优先级 | 描述                           | 代码仓库                                  | 工具        |
+|--------------+--------+--------------------------------+-------------------------------------------+-------------|
+| configcentra |     -1 | 配置中心服务(启动配置文件解析) | https://github.com/walleframe/svc_cfgfile | gogen cfgen |
+| wlogger      |      1 | 日志文件                       | walle                                     | wpb         |
+| etcdstore    |     10 | etcd存储                       | https://github.com/walleframe/svc_etcd    |             |
+| xlsxmgr      |     20 | excel配置管理器                | https://github.com/walleframe/svc_xlsx    | wctl xlsx   |
+| dbmgr        |     30 | 数据库等链接管理               | https://github.com/walleframe/svc_db      | wdb         |
+| redis        |     40 | redis链接管理                  | https://github.com/walleframe/svc_redis   | wredis      |
+| metrics      |    100 | prometheus 监控告警组件        | walle                                     |             |
+| rpcclient    |    180 | rpc客户端链接                  | walle                                     | wrpc        |
+| rpcserver    |    910 | rpc服务器                      | walle                                     | wrpc        |
 ~bootstrap.RegisterService~ 默认使用优先级 ~500~ ，自定义优先级使用 ~bootstrap.RegisterServiceByPriority~
 ** config centra
 使用配置文件: https://github.com/walleframe/svc_cfgfile
@@ -142,7 +69,7 @@ func main() {
 #+end_src
 
 ** xlsx manager
-github.com/walleframe/svc_xlsx
+https://github.com/walleframe/svc_xlsx
 
 *** 使用方式
 使用 ~wctl xlsx~ 命令生成xlsx数据和xlsx加载代码. 使用init函数进行使用关系管理.
@@ -163,5 +90,44 @@ func main() {
 }
 #+end_src
 
-** redis 
-** mysql 
+** redis
+查看 https://github.com/walleframe/svc_redis 仓库
+** mysql
+查看 https://github.com/walleframe/svc_db/ 仓库
+* 代码约定
+** 组件约定
+所有服务组件,实现app包内的Service接口. 由xmain进行统一管理启动关闭流程.  
+** redis,mysql,excel等数据组件之间的约定
+生成代码引用服务定义代码,服务代码自动注册自身到 walle/app/xmain 内.
+
+这样做是为了方便开发, 注册逻辑在包init时候注册,实际启动/初始化等由xmain控制.
+
+所有init函数只能做注册关系操作,不能有实际逻辑处理代码.
+** 其他,待完善
+* 组件替换
+待完善
+* 网络层
+[[./doc/network.org][网络层详细文档]]
+* 进度
+** DONE 网络层支持以下接口
+ - [X] gotcp
+ - [X] gnet
+ - [X] kcp
+ - [X] websocket
+** DONE 分布式
+ - [X] kvstore（参考libkv接口）
+ - [X] 服务注册发现
+ - [X] ClientProxy
+** TODO 工具代码包
+ - [ ] gpool
+ - [ ] skeleton
+** DONE 代码生成
+ - [X] excel配置相关
+ - [X] rpc、tcp代码
+ - [X] redis 代码
+ - [X] mysql
+** DONE 优化
+ - [X] 客户端链接允许不直接建立链接
+ - [X] packet包 独立，不直接使用pb消息（兼容其他格式，比如sproto）
+** DONE 需要调整
+TCPServer等，应该提供注册接口，而不是让外部直接去设置Router，每种设置，提供全局的默认值修改机制。
