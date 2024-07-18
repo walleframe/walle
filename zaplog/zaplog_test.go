@@ -2,13 +2,9 @@ package zaplog
 
 import (
 	"fmt"
-	"net/url"
-	"os"
-	"runtime"
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/walleframe/walle/testpkg"
 	"go.uber.org/zap"
@@ -50,111 +46,111 @@ func TestLogger_Write(t *testing.T) {
 	}
 }
 
-func TestZapLogger(t *testing.T) {
-	runtime.MemProfileRate = 1
-	zl, _ := zap.NewDevelopment()
-	zs := zl.Sugar()
-	zl.Debug("abc", zap.String("a", "v"), zap.Int("b", 10))
-	zl.Debug("abc", zap.String("a", "v"), zap.Int("b", 10))
+// func TestZapLogger(t *testing.T) {
+// 	runtime.MemProfileRate = 1
+// 	zl, _ := zap.NewDevelopment()
+// 	zs := zl.Sugar()
+// 	zl.Debug("abc", zap.String("a", "v"), zap.Int("b", 10))
+// 	zl.Debug("abc", zap.String("a", "v"), zap.Int("b", 10))
 
-	zs.Debug("abc", "v", 10)
-	zs.Debug("abc", "v", 10)
-	zs.Debugf("abc %s %d", "v", 10)
-	zs.Debugf("abc %s %d", "v", 10)
+// 	zs.Debug("abc", "v", 10)
+// 	zs.Debug("abc", "v", 10)
+// 	zs.Debugf("abc %s %d", "v", 10)
+// 	zs.Debugf("abc %s %d", "v", 10)
 
-	println("------------------------------")
-	ll := logrus.New()
-	ll.Out = os.Stdout
-	ll.Level = logrus.DebugLevel
-	ll.Debug("abc ", "v", 10)
-	ll.Debug("abc ", "v", 10)
-	ll.Debugf("abc %s %d", "v", 10)
-	ll.Debugf("abc %s %d", "v", 10)
-}
+// 	println("------------------------------")
+// 	ll := logrus.New()
+// 	ll.Out = os.Stdout
+// 	ll.Level = logrus.DebugLevel
+// 	ll.Debug("abc ", "v", 10)
+// 	ll.Debug("abc ", "v", 10)
+// 	ll.Debugf("abc %s %d", "v", 10)
+// 	ll.Debugf("abc %s %d", "v", 10)
+// }
 
-func BenchmarkLoggers(b *testing.B) {
+// func BenchmarkLoggers(b *testing.B) {
 
-	zap.RegisterSink("empty", func(u *url.URL) (zap.Sink, error) {
-		return testpkg.EmtpyLogWriter{}, nil
-	})
-	cfg := zap.NewProductionConfig()
-	cfg.OutputPaths = []string{"empty://xx"}
-	cfg.ErrorOutputPaths = []string{"empty://xx"}
-	zlog, _ := cfg.Build()
+// 	zap.RegisterSink("empty", func(u *url.URL) (zap.Sink, error) {
+// 		return testpkg.EmtpyLogWriter{}, nil
+// 	})
+// 	cfg := zap.NewProductionConfig()
+// 	cfg.OutputPaths = []string{"empty://xx"}
+// 	cfg.ErrorOutputPaths = []string{"empty://xx"}
+// 	zlog, _ := cfg.Build()
 
-	llog := logrus.New()
-	llog.Out = testpkg.EmtpyLogWriter{}
-	llog.Level = logrus.DebugLevel
-	llog.ReportCaller = false
+// 	llog := logrus.New()
+// 	llog.Out = testpkg.EmtpyLogWriter{}
+// 	llog.Level = logrus.DebugLevel
+// 	llog.ReportCaller = false
 
-	b.Run("logrus     ", func(b *testing.B) {
-		log := llog
-		b.ResetTimer()
-		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
-			log.Debugf("abc %s %d", "v", 10)
-		}
-	})
-	b.Run("logrus2     ", func(b *testing.B) {
-		log := llog
-		b.ResetTimer()
-		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
-			log.Debug("abc", "v", 10)
-		}
-	})
-	b.Run("zap-sugar   ", func(b *testing.B) {
-		log := zlog.Sugar()
-		b.ResetTimer()
-		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
-			log.Infof("abc %s %d", "v", 10)
-		}
-	})
-	b.Run("zap-sugar2   ", func(b *testing.B) {
-		log := zlog.Sugar()
-		b.ResetTimer()
-		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
-			log.Info("abc", "v", 10)
-		}
-	})
+// 	b.Run("logrus     ", func(b *testing.B) {
+// 		log := llog
+// 		b.ResetTimer()
+// 		b.ReportAllocs()
+// 		for i := 0; i < b.N; i++ {
+// 			log.Debugf("abc %s %d", "v", 10)
+// 		}
+// 	})
+// 	b.Run("logrus2     ", func(b *testing.B) {
+// 		log := llog
+// 		b.ResetTimer()
+// 		b.ReportAllocs()
+// 		for i := 0; i < b.N; i++ {
+// 			log.Debug("abc", "v", 10)
+// 		}
+// 	})
+// 	b.Run("zap-sugar   ", func(b *testing.B) {
+// 		log := zlog.Sugar()
+// 		b.ResetTimer()
+// 		b.ReportAllocs()
+// 		for i := 0; i < b.N; i++ {
+// 			log.Infof("abc %s %d", "v", 10)
+// 		}
+// 	})
+// 	b.Run("zap-sugar2   ", func(b *testing.B) {
+// 		log := zlog.Sugar()
+// 		b.ResetTimer()
+// 		b.ReportAllocs()
+// 		for i := 0; i < b.N; i++ {
+// 			log.Info("abc", "v", 10)
+// 		}
+// 	})
 
-	b.Run("zap-struct   ", func(b *testing.B) {
-		log := zlog
-		b.ResetTimer()
-		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
-			log.Info("abc", zap.String("a", "v"), zap.Int("d", 10))
-		}
-	})
-	cfg2 := zap.NewDevelopmentConfig()
-	cfg2.OutputPaths = []string{"empty://xx"}
-	cfg2.ErrorOutputPaths = []string{"empty://xx"}
-	zlog2, _ := cfg2.Build()
-	b.Run("zap-sugar(dev)", func(b *testing.B) {
-		log := zlog2.Sugar()
-		b.ResetTimer()
-		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
-			log.Infof("abc %s %d", "v", 10)
-		}
-	})
-	b.Run("zap-sugar2(dev)", func(b *testing.B) {
-		log := zlog2.Sugar()
-		b.ResetTimer()
-		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
-			log.Info("abc", "v", 10)
-		}
-	})
+// 	b.Run("zap-struct   ", func(b *testing.B) {
+// 		log := zlog
+// 		b.ResetTimer()
+// 		b.ReportAllocs()
+// 		for i := 0; i < b.N; i++ {
+// 			log.Info("abc", zap.String("a", "v"), zap.Int("d", 10))
+// 		}
+// 	})
+// 	cfg2 := zap.NewDevelopmentConfig()
+// 	cfg2.OutputPaths = []string{"empty://xx"}
+// 	cfg2.ErrorOutputPaths = []string{"empty://xx"}
+// 	zlog2, _ := cfg2.Build()
+// 	b.Run("zap-sugar(dev)", func(b *testing.B) {
+// 		log := zlog2.Sugar()
+// 		b.ResetTimer()
+// 		b.ReportAllocs()
+// 		for i := 0; i < b.N; i++ {
+// 			log.Infof("abc %s %d", "v", 10)
+// 		}
+// 	})
+// 	b.Run("zap-sugar2(dev)", func(b *testing.B) {
+// 		log := zlog2.Sugar()
+// 		b.ResetTimer()
+// 		b.ReportAllocs()
+// 		for i := 0; i < b.N; i++ {
+// 			log.Info("abc", "v", 10)
+// 		}
+// 	})
 
-	b.Run("zap-struct(dev)", func(b *testing.B) {
-		log := zlog2
-		b.ResetTimer()
-		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
-			log.Info("abc", zap.String("a", "v"), zap.Int("d", 10))
-		}
-	})
-}
+// 	b.Run("zap-struct(dev)", func(b *testing.B) {
+// 		log := zlog2
+// 		b.ResetTimer()
+// 		b.ReportAllocs()
+// 		for i := 0; i < b.N; i++ {
+// 			log.Info("abc", zap.String("a", "v"), zap.Int("d", 10))
+// 		}
+// 	})
+// }

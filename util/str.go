@@ -21,6 +21,12 @@ func BytesToString(b []byte) string {
 	return *(*string)(unsafe.Pointer(&b))
 }
 
+func StringBuilder(size int, bf func(buf *Builder)) string {
+	buf := Builder{buf: make([]byte, 0, size)}
+	bf(&buf)
+	return buf.String()
+}
+
 // A Builder is used to efficiently build a string using Write methods.
 // It minimizes memory copying. The zero value is ready to use.
 // Do not copy a non-zero Builder.
@@ -36,6 +42,7 @@ type Builder struct {
 // compiles down to zero instructions.
 // USE CAREFULLY!
 // This was copied from the runtime; see issues 23382 and 7921.
+//
 //go:nosplit
 //go:nocheckptr
 func noescape(p unsafe.Pointer) unsafe.Pointer {

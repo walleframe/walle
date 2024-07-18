@@ -1,0 +1,79 @@
+* kcp 网络层IO支持
+因为kcp支持go net包接口，所以使用kcp,只需要修改gotcp包option选项即可。
+
+** 服务器
+#+begin_src go
+package main
+
+import (
+	"fmt"
+	"net"
+
+	"github.com/xtaci/kcp-go"
+	"github.com/walleframe/walle/network/gotcp"
+	"github.com/walleframe/walle/process"
+	"github.com/walleframe/walle/testpkg/wpb"
+	"github.com/walleframe/walle/zaplog"
+)
+
+func main() {
+	p := 12345
+	fmt.Println("port:", p)
+
+	zaplog.SetFrameLogger(zaplog.NoopLogger)
+	zaplog.SetLogicLogger(zaplog.NoopLogger)
+	// zaplog.SetFrameLogger(zaplog.GetLogicLogger())
+
+	wpb.RegisterWSvcService(process.GetRouter(), &wpb.WPBSvc{})
+	svc := gotcp.NewServer(
+		gotcp.WithReuseReadBuffer(true),
+		gotcp.WithListen(func(addr string) (ln net.Listener, err error) {
+			return kcp.Listen(addr)
+		}),
+	)
+	svc.Run(fmt.Sprintf(":%d", p))
+}
+
+#+end_src
+** 客户端
+#+begin_src go
+package main
+
+import (
+	"context"
+	"fmt"
+	"time"
+	"net"
+
+	"github.com/xtaci/kcp-go"
+	"github.com/walleframe/walle/network/gotcp"
+	"github.com/walleframe/walle/testpkg/wpb"
+	"github.com/walleframe/walle/util"
+	"github.com/walleframe/walle/zaplog"
+)
+
+func main() {
+	zaplog.SetFrameLogger(zaplog.NoopLogger)
+	zaplog.SetLogicLogger(zaplog.NoopLogger)
+	// zaplog.SetFrameLogger(zaplog.GetLogicLogger())
+
+	cli, err := gotcp.NewClient(
+		gotcp.WithClientOptionAddr(fmt.Sprintf("localhost:%d", 12345)),
+		gotcp.WithClientOptionDialer(func (network, addr string) (conn net.Conn, err error) {
+			return kcp.Dial(addr)
+		}),
+	)
+	if err != nil {
+		util.PanicIfError(err)
+	}
+	time.Sleep(time.Second)
+
+	wcli := wpb.NewWSvcClient(cli)
+	ctx := context.Background()
+
+	rs, err := wcli.Add(ctx, &wpb.AddRq{Params: []int64{100}})
+	fmt.Println(rs, err)
+}
+
+#+end_src
+

@@ -206,117 +206,6 @@ func walleProcessInner() interface{} {
  - Logger 全局日志
  - NewSession 用于定制、替换、或者封装 Session链接接口
  - SessionRouter，SessionLogger 定制每个链接的路由及日志接口。默认使用全局配置。
-** websocket 选项 - io层
-[[./example/ws][websocket例子]]
-#+begin_src go
-// ServerOption
-//go:generate gogen option -n ServerOption -o option.server.go
-func walleServer() interface{} {
-	return map[string]interface{}{
-		// Addr Server Addr. websocket监听地址
-		"Addr": string(":8080"),
-		// WsPath websocket server path。 路由
-		"WsPath": string("/ws"),
-		// Upgrade websocket upgrade
-		"Upgrade": (*websocket.Upgrader)(DefaultUpgrade),
-		// UpgradeFail upgrade fail notify.
-		"UpgradeFail": func(w http.ResponseWriter, r *http.Request, reason error) {},
-		// accepted load limit.链接数量限制
-		"AcceptLoadLimit": func(sess Session, cnt int64) bool { return false },
-		// Process Options 传递给process的选项。
-		"ProcessOptions": []process.ProcessOption{},
-		// process router。路由
-		"Router": Router(nil),
-		// SessionRouter custom session router。定制路由
-		"SessionRouter": func(sess Session, global Router) (r Router) { return global },
-		// log interface 日志接口
-		"Logger": (*zaplog.Logger)(zaplog.Default),
-		// SessionLogger custom session logger。定制日志接口
-		"SessionLogger": func(sess Session, global *zaplog.Logger) (r *zaplog.Logger) { return global },
-		// NewSession custom session。新链接通知
-		"NewSession": func(in Session, r *http.Request) (Session, error) { return in, nil },
-		// StopImmediately when session finish,business finish immediately.
-		// 链接断开后，是否停止处理流程。 应该根据业务分析决定。
-		"StopImmediately": false,
-		// ReadTimeout read timetout
-		"ReadTimeout": time.Duration(0),
-		// WriteTimeout write timeout
-		"WriteTimeout": time.Duration(0),
-		// MaxMessageLimit limit message size
-		"MaxMessageLimit": int(0),
-		// Write network data method.
-		"WriteMethods": WriteMethod(WriteAsync),
-		// SendQueueSize async send queue size
-		"SendQueueSize": int(1024),
-		// Heartbeat use websocket ping/pong.
-		"Heartbeat": time.Duration(0),
-		// HttpServeMux custom set mux
-		"HttpServeMux": (*http.ServeMux)(http.DefaultServeMux),
-	}
-}
-#+end_src
-
-** gnet选项 - io层
-[[./example/gnet][gnet例子]]
-gnet 当前客户端支持正在开发（dev分支，还有问题，暂时可以使用gotcp）
-
-gnet层封装 支持大部分原始gnet包的配置（日志除外，之后会在walle日志修改时进行统一）
-
-*** server 选项
-#+begin_src go
-// ServerOption
-//go:generate gogen option -n ServerOption -o option.server.go
-func walleServer() interface{} {
-	return map[string]interface{}{
-		// Addr Server Addr
-		"Addr": string("tcp://0.0.0.0:8080"),
-		// NetOption modify raw options
-		"NetConnOption": func(net.Conn) {},
-		// accepted load limit
-		"AcceptLoadLimit": func(sess Session, cnt int64) bool { return false },
-		// Process Options
-		"ProcessOptions": []process.ProcessOption{},
-		// process router
-		"Router": Router(nil),
-		// SessionRouter custom session router
-		"SessionRouter": func(sess Session, global Router) (r Router) { return global },
-		// log interface
-		"Logger": (*zaplog.Logger)(zaplog.Default),
-		// SessionLogger custom session logger
-		"SessionLogger": func(sess Session, global *zaplog.Logger) (r *zaplog.Logger) { return global },
-		// NewSession custom session
-		"NewSession": func(in Session) (Session, error) { return in, nil },
-		// StopImmediately when session finish,business finish immediately.
-		"StopImmediately": false,
-		// Heartbeat use websocket ping/pong.
-		"Heartbeat": time.Duration(0),
-		// WithMulticore sets up multi-cores in gnet server.
-		"Multicore": false,
-		// WithLockOSThread sets up LockOSThread mode for I/O event-loops.
-		"LockOSThread": false,
-		// WithLoadBalancing sets up the load-balancing algorithm in gnet server.
-		"LoadBalancing": gnet.LoadBalancing(gnet.SourceAddrHash),
-		// WithNumEventLoop sets up NumEventLoop in gnet server.
-		"NumEventLoop": int(0),
-		// WithReusePort sets up SO_REUSEPORT socket option.
-		"ReusePort": false,
-		// WithTCPKeepAlive sets up the SO_KEEPALIVE socket option with duration.
-		"TCPKeepAlive": time.Duration(0),
-		// WithTCPNoDelay enable/disable the TCP_NODELAY socket option.
-		"TCPNoDelay": gnet.TCPSocketOpt(gnet.TCPNoDelay),
-		// WithReadBufferCap sets up ReadBufferCap for reading bytes.
-		"ReadBufferCap": int(0),
-		// WithSocketRecvBuffer sets the maximum socket receive buffer in bytes.
-		"SocketRecvBuffer": int(0),
-		// WithSocketSendBuffer sets the maximum socket send buffer in bytes.
-		"SocketSendBuffer": int(0),
-		// WithTicker indicates that a ticker is set.
-		"Ticker": time.Duration(0),
-		// WithCodec sets up a codec to handle TCP stream.
-		"Codec": gnet.ICodec(gnet.ICodec(DefaultGNetCodec)),
-	}
-}
-#+end_src
 
 ** gotcp选项 - io层
 [[./example/gotcp][gotcp例子]]
@@ -458,6 +347,13 @@ func walleClient() interface{} {
 
 #+end_src
 
+*** 其他IO层组件
+| 组件名    | 组件仓库                                        |
+|-----------+-------------------------------------------------|
+| websocket | https://github.com/walleframe/net_websocket.git |
+| gnet      | https://github.com/walleframe/net_gnet.git      |
+| kcp       | [[./kcp.org][kcp支持]]                                         |
+
 *** 定制辅助
 **** 定制网络包
 通过 PacketHeadBuf，ReadSize，WriteSize 选项，可以定制网络包
@@ -475,12 +371,4 @@ ReuseReadBuffer 复用read缓存区。影响Process.DispatchFilter.
  - 默认为false,是为了防止错误的配置导致bug。
 
 建议设置 ReuseReadBuffer，如果需要独立协程，可以在中间件（CallChain）中设置.
-** kcp 支持 - io层
-[[./example/kcp][kcp例子-仅在gotcp例子基础上添加了以下选项配置修改]]
-因为kcp支持go net包接口，所以使用kcp,只需要修改gotcp包option选项即可。
-#+begin_src go
-// 客户端选项
-WithClientOptionsDialer(kcp.GoTCPClientOptionDialer)
-// 服务器选项
-server.WithListen(kcp.GoTCPServerOptionListen)
-#+end_src
+
