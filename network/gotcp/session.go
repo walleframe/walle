@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/binary"
 	"io"
-	net "net"
+	"net"
 	"sync"
 	"time"
 
