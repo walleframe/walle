@@ -132,6 +132,10 @@ func (d *discovery) convertEntries(kvs []*kvstore.KVPair) (all Entries, err erro
 		v.Key = strings.TrimLeft(v.Key, d.path)
 		err2 := d.opts.Codec.Unmarshal(e, v.Key, v.Value)
 		if err2 != nil {
+			d.opts.FrameLogger.New("discovery.ConvertEntry").Error("unamrshal failed",
+				zap.Error(err), zap.String("path", d.path),
+				zap.String("key", v.Key), zap.Binary("value", v.Value), // 这里使用binary，如果是json查看日志时候decode base64就行了。
+			)
 			// FIXME: 是否抛出错误？ 或者通过配置让上层选择
 			continue
 		}

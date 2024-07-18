@@ -23,6 +23,10 @@ type Registry interface {
 	Offline(ctx context.Context) (err error)
 	// Close clean entry info
 	Clean(ctx context.Context) (err error)
+	// GetEntry get current node's Entry
+	GetEntry() Entry
+	// UpdateEntry
+	UpdateEntry(ctx context.Context) (err error)
 }
 
 //go:generate gogen option -n RegistryOption -f Registry -o option.registry.go
@@ -116,6 +120,25 @@ func (r *registry) Clean(ctx context.Context) (err error) {
 	err = r.store.Delete(ctx, kvstore.Join(r.path, string(key)))
 	if err != nil {
 		r.opts.FrameLogger.New("Registry.Clean").Error("delete failed", zap.Error(err))
+	}
+	return
+}
+
+// GetEntry get current node's Entry
+func (r *registry) GetEntry() Entry {
+	return r.entry
+}
+
+// UpdateEntry
+func (r *registry) UpdateEntry(ctx context.Context) (err error) {
+	key, value, err := r.opts.Codec.Mashal(r.entry)
+	if err != nil {
+		r.opts.FrameLogger.New("Registry.UpdateEntry").Error("marshal failed", zap.Error(err))
+		return err
+	}
+	err = r.store.Put(ctx, kvstore.Join(r.path, string(key)), value)
+	if err != nil {
+		r.opts.FrameLogger.New("Registry.UpdateEntry").Error("put failed", zap.Error(err))
 	}
 	return
 }
