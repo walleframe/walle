@@ -7,6 +7,8 @@ import (
 
 type NoOpRegistry struct{}
 
+var _ Registry = (*NoOpRegistry)(nil)
+
 // NewEntry create entry,wait for register
 func (NoOpRegistry) NewEntry(ctx context.Context, addr net.Addr) (err error) {
 	return
@@ -27,7 +29,19 @@ func (NoOpRegistry) Clean(ctx context.Context) (err error) {
 	return
 }
 
+// GetEntry get current node's Entry
+func (NoOpRegistry) GetEntry() Entry {
+	return nil
+}
+
+// UpdateEntry
+func (NoOpRegistry) UpdateEntry(ctx context.Context) (err error) {
+	return
+}
+
 type NoOpDiscovery struct{}
+
+var _ Discovery = (*NoOpDiscovery)(nil)
 
 func (NoOpDiscovery) Watch(ctx context.Context) (changes <-chan Entries, err error) {
 	return
