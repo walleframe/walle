@@ -23,8 +23,6 @@ func walleProcessInner() interface{} {
 		"ParentCtx": context.Context(context.Background()),
 		// Sequence number
 		"Sequence": AtomicNumber(&atomic.Int64{}),
-		// load number interface
-		"Load": AtomicNumber(&atomic.Int64{}),
 		// bind data
 		"BindData": interface{}(nil),
 		// process router.
@@ -56,8 +54,6 @@ func walleProcessOption() interface{} {
 		// dispatch packet struct filter
 		"DispatchPacketFilter": PacketDispatcherFilter(DefaultPacketFilter),
 		// load limit. return true to ignore packet.
-		"LoadLimitFilter": func(req interface{}, count AtomicNumber) bool {
-			return false
-		},
+		"LoadLimitFilter": (func(req interface{}) bool)(nil),
 	}
 }

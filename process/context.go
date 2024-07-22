@@ -25,8 +25,7 @@ type WrapContext struct {
 	Index    int
 	Handlers []MiddlewareFunc
 	// input packet
-	InPkg    interface{}
-	LoadFlag bool
+	InPkg interface{}
 	// Log context
 	Log *zaplog.Logger
 	// use to free context
@@ -128,10 +127,6 @@ func (ctx *WrapContext) Next(nctx Context) {
 	if index+1 >= len(ctx.Handlers) {
 		if ctx.InPkg != nil {
 			ctx.Opts.PacketPool.Put(ctx.InPkg)
-			// decr load info
-			if ctx.LoadFlag {
-				ctx.Inner.Load.Dec()
-			}
 			ctx.InPkg = nil
 		}
 		if ctx.FreeContext != nil {
@@ -167,14 +162,14 @@ func (ctx *WrapContext) NewEntry(funcName string) *zaplog.LogEntities {
 }
 
 type ContextPool interface {
-	NewContext(inner *InnerOptions, opts *ProcessOptions, inPkg interface{}, handlers []MiddlewareFunc, loadFlag bool) Context
+	NewContext(inner *InnerOptions, opts *ProcessOptions, inPkg interface{}, handlers []MiddlewareFunc) Context
 	FreeContext(Context)
 }
 type wrapContextPool struct {
 	sync.Pool
 }
 
-func (p *wrapContextPool) NewContext(inner *InnerOptions, opts *ProcessOptions, inPkg interface{}, handlers []MiddlewareFunc, loadFlag bool) Context {
+func (p *wrapContextPool) NewContext(inner *InnerOptions, opts *ProcessOptions, inPkg interface{}, handlers []MiddlewareFunc) Context {
 	ctx := p.Get().(*WrapContext)
 	ctx.Inner = inner
 	ctx.Opts = opts
@@ -182,7 +177,6 @@ func (p *wrapContextPool) NewContext(inner *InnerOptions, opts *ProcessOptions, 
 	ctx.Index = 0
 	ctx.Handlers = handlers
 	ctx.InPkg = inPkg
-	ctx.LoadFlag = loadFlag
 	ctx.Log = opts.Logger
 	ctx.FreeContext = ctx
 	return ctx

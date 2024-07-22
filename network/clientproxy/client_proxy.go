@@ -59,7 +59,6 @@ func walleClientProxy() interface{} {
 
 // ClientProxy client wrap
 type ClientProxy struct {
-	pkgLoad  atomic.Int64
 	sequence atomic.Int64
 
 	path      string
@@ -144,7 +143,6 @@ func (c *ClientProxy) linkEntry(e discovery.Entry, wg *sync.WaitGroup) (err erro
 	net, addr := e.Address()
 	cli, err := c.opts.NewClient(net, addr, process.NewInnerOptions(
 		process.WithInnerOptionBindData(c),
-		process.WithInnerOptionLoad(&c.pkgLoad),
 		process.WithInnerOptionSequence(&c.sequence),
 	))
 	if err != nil {

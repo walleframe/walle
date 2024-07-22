@@ -24,6 +24,8 @@ const (
 	ErrorCodeSessionClosed ErrorCode = 8
 	//
 	ErrorCodeInvalidErrorPayload ErrorCode = 9
+	//
+	ErrorCodeRequestLimit ErrorCode = 10
 )
 
 var (
@@ -45,4 +47,6 @@ var (
 	ErrSessionClosed = NewError(ErrorCodeSessionClosed, "session closed")
 	// ErrInvalidErrPayload error payload invalid
 	ErrInvalidErrPayload = NewError(ErrorCodeInvalidErrorPayload, "error payload invalid")
+	//
+	ErrRequestLoadLimit = NewError(ErrorCodeRequestLimit, "request load limit")
 )

@@ -112,7 +112,6 @@ func walleServer() interface{} {
 // GoServer websocket server
 type GoServer struct {
 	acceptLoad atomic.Int64
-	pkgLoad    atomic.Int64
 	sequence   atomic.Int64
 	opts       *ServerOptions
 	procInner  *process.InnerOptions
@@ -139,7 +138,6 @@ func NewServer(opts ...ServerOption) *GoServer {
 	s.opts.MaxMessageSizeLimit -= len(s.opts.PacketHeadBuf())
 	// process opts
 	s.procInner = process.NewInnerOptions(
-		process.WithInnerOptionLoad(&s.pkgLoad),
 		process.WithInnerOptionSequence(&s.sequence),
 	)
 	s.procOpts = process.NewProcessOptions(

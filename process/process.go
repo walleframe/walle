@@ -9,6 +9,7 @@ import (
 //go:generate mockgen -source processer.go -destination ../testpkg/mock_process/processer.go
 
 type ProcessFilter func(pkg interface{}) (filter bool)
+type ProcessFailed func(pkg interface{}, err error)
 
 // Process 通用process 封装
 type Process struct {
@@ -16,6 +17,7 @@ type Process struct {
 	Inner          *InnerOptions
 	Opts           *ProcessOptions
 	Filter         ProcessFilter
+	Failed         ProcessFailed
 	dispatchData   DataDispatcherFunc
 	dispatchPacket PacketDispatcherFunc
 }
@@ -50,7 +52,10 @@ func (p *Process) innerData(data []byte) (err error) {
 	pkg := p.Opts.PacketPool.Get()
 	err = p.Opts.PacketCodec.Unmarshal(data, pkg)
 	if err != nil {
-		p.Opts.FrameLogger.New("process.innerData").Error("unmarshal packet.Paket failed", zap.Error(err))
+		// if p.Failed != nil {
+		// 	p.Failed(data, err)
+		// }
+		p.Opts.FrameLogger.New("process.innerData").Error("unmarshal packet.Paket failed", zap.Error(err), zap.Binary("data", data))
 		return err
 	}
 
@@ -65,6 +70,9 @@ func (p *Process) innerData(data []byte) (err error) {
 func (p *Process) innerPacket(pkg interface{}) (err error) {
 	if p.Inner.Router == nil {
 		err = errcode.ErrUnexpectedCode
+		if p.Failed != nil {
+			p.Failed(pkg, err)
+		}
 		p.Opts.FrameLogger.New("process.innerPacket").Warn("unexcepted code: not set Router)", zap.Any("pkg", pkg))
 		p.Opts.PacketPool.Put(pkg)
 		return
@@ -73,20 +81,25 @@ func (p *Process) innerPacket(pkg interface{}) (err error) {
 	// Request or Notice
 	handlers, err := p.Inner.Router.GetHandlers(pkg)
 	if err != nil {
+		if p.Failed != nil {
+			p.Failed(pkg, err)
+		}
 		p.Opts.FrameLogger.New("process.innerPacket").Warn("get handler failed", zap.Any("pkg", pkg), zap.Error(err))
 		p.Opts.PacketPool.Put(pkg)
 		return err
 	}
 
 	// load limit
-	if p.Opts.LoadLimitFilter(pkg, p.Inner.Load) {
+	if p.Opts.LoadLimitFilter != nil && p.Opts.LoadLimitFilter(pkg) {
+		if p.Failed != nil {
+			p.Failed(pkg, errcode.ErrRequestLoadLimit)
+		}
 		p.Opts.PacketPool.Put(pkg)
-		p.Inner.Load.Dec()
 		p.Opts.FrameLogger.New("process.innerPacket").Debug("process load limit", zap.Any("pkg", pkg))
 		return
 	}
 
-	ctx := p.Inner.ContextPool.NewContext(p.Inner, p.Opts, pkg, handlers, true)
+	ctx := p.Inner.ContextPool.NewContext(p.Inner, p.Opts, pkg, handlers)
 	ctx.Next(ctx)
 
 	return

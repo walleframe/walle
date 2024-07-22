@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/walleframe/walle/process"
@@ -39,6 +40,7 @@ func NewRPCProcess(inner *process.InnerOptions, opts *process.ProcessOptions) *R
 		Process: process.NewProcess(inner, opts),
 	}
 	p.Process.Filter = p.OnReply
+	p.Process.Failed = p.OnFailed
 	return p
 }
 
@@ -69,7 +71,7 @@ func (p *RPCProcess) OnReply(in interface{}) (filter bool) {
 	if sess.done == nil && len(sess.aFunc) > 0 {
 		// aFilter -> ctx.Next(ctx)
 		// NOTE: sess.aReq only valid in aFilter.
-		sess.aFilter(p.Inner.ContextPool.NewContext(p.Inner, p.Opts, rsp, sess.aFunc, false), sess.aReq, rsp)
+		sess.aFilter(p.Inner.ContextPool.NewContext(p.Inner, p.Opts, rsp, sess.aFunc), sess.aReq, rsp)
 		// free req packet.
 		p.Opts.PacketPool.Put(sess.aReq)
 		return
@@ -77,6 +79,39 @@ func (p *RPCProcess) OnReply(in interface{}) (filter bool) {
 	// Sync Call or Async Call with timeout.
 	sess.done <- rsp
 	return
+}
+
+// OnFailed 调度时候失败.
+func (p *RPCProcess) OnFailed(pkg interface{}, err error) {
+	log := p.logger("process.OnFailed")
+	rq, ok := pkg.(*packet.Packet)
+	if !ok {
+		log.Error("input pkg not *packet.Paket", zap.Error(err), zap.String("Type", fmt.Sprintf("%T", pkg)))
+		return
+	}
+	rsp := p.Opts.PacketPool.Get()
+	p.Opts.PacketWraper.NewResponse(pkg, rsp, rq.GetMD())
+	p.Opts.PacketWraper.PayloadMarshal(rsp, p.Opts.MsgCodec, errcode.ErrTimeout)
+	if err != nil {
+		log.Error("marshal payload failed", zap.Error(err), zap.Any("reqeust", rq), zap.Object("packet", rq))
+		return
+	}
+
+	data, err := p.Opts.PacketCodec.Marshal(rq)
+	if err != nil {
+		log.Error("marshal packet failed", zap.Error(err), zap.Any("reqeust", rq), zap.Object("packet", rq))
+		return
+	}
+
+	data = p.Opts.PacketEncode.Encode(data)
+
+	// send request
+	_, err = p.Inner.Output.Write(data)
+	if err != nil {
+		log.Error("write data failed", zap.Error(err), zap.Any("reqeust", rq), zap.Object("packet", rq))
+		return
+	}
+
 }
 
 // Call 同步rpc请求
@@ -107,7 +142,7 @@ func (p *RPCProcess) Call(ctx context.Context, uri interface{}, rq, rs interface
 		return
 	}
 
-	data = p.Opts.PacketEncode.Decode(data)
+	data = p.Opts.PacketEncode.Encode(data)
 
 	session := &rpcSession{
 		seq:  req.SessionID(),
@@ -176,7 +211,7 @@ func (p *RPCProcess) AsyncCall(ctx context.Context, uri interface{}, rq interfac
 		return
 	}
 
-	data = p.Opts.PacketEncode.Decode(data)
+	data = p.Opts.PacketEncode.Encode(data)
 
 	session := &rpcSession{
 		seq: req.SessionID(),
@@ -221,7 +256,7 @@ func (p *RPCProcess) AsyncCall(ctx context.Context, uri interface{}, rq interfac
 		case rsp := <-session.done:
 			// aFilter -> ctx.Next(ctx)
 			// NOTE: sess.aReq only valid in aFilter.
-			session.aFilter(p.Inner.ContextPool.NewContext(p.Inner, p.Opts, rsp, session.aFunc, false), session.aReq, rsp)
+			session.aFilter(p.Inner.ContextPool.NewContext(p.Inner, p.Opts, rsp, session.aFunc), session.aReq, rsp)
 			// free req packet.
 			p.Opts.PacketPool.Put(session.aReq)
 		}
@@ -254,7 +289,7 @@ func (p *RPCProcess) asyncCallTimeout(sessionId uint64) {
 
 	// aFilter -> ctx.Next(ctx)
 	// NOTE: sess.aReq only valid in aFilter.
-	last.aFilter(p.Inner.ContextPool.NewContext(p.Inner, p.Opts, rsp, last.aFunc, false), last.aReq, rsp)
+	last.aFilter(p.Inner.ContextPool.NewContext(p.Inner, p.Opts, rsp, last.aFunc), last.aReq, rsp)
 }
 
 // Notify 通知请求(one way)
@@ -283,7 +318,7 @@ func (p *RPCProcess) Notify(ctx context.Context, uri interface{}, rq interface{}
 		return
 	}
 
-	data = p.Opts.PacketEncode.Decode(data)
+	data = p.Opts.PacketEncode.Encode(data)
 
 	// timeout options
 	if opts.Timeout > 0 {
@@ -319,7 +354,7 @@ func (p *RPCProcess) Clean() {
 
 			// aFilter -> ctx.Next(ctx)
 			// NOTE: sess.aReq only valid in aFilter.
-			sess.aFilter(p.Inner.ContextPool.NewContext(p.Inner, p.Opts, rsp, sess.aFunc, false), sess.aReq, rsp)
+			sess.aFilter(p.Inner.ContextPool.NewContext(p.Inner, p.Opts, rsp, sess.aFunc), sess.aReq, rsp)
 			// free req packet.
 			p.Opts.PacketPool.Put(sess.aReq)
 			continue

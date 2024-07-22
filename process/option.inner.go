@@ -23,8 +23,6 @@ type InnerOptions struct {
 	ParentCtx context.Context
 	// Sequence number
 	Sequence AtomicNumber
-	// load number interface
-	Load AtomicNumber
 	// bind data
 	BindData interface{}
 	// process router.
@@ -64,15 +62,6 @@ func WithInnerOptionSequence(v AtomicNumber) InnerOption {
 		previous := cc.Sequence
 		cc.Sequence = v
 		return WithInnerOptionSequence(previous)
-	}
-}
-
-// load number interface
-func WithInnerOptionLoad(v AtomicNumber) InnerOption {
-	return func(cc *InnerOptions) InnerOption {
-		previous := cc.Load
-		cc.Load = v
-		return WithInnerOptionLoad(previous)
 	}
 }
 
@@ -140,7 +129,6 @@ func newDefaultInnerOptions() *InnerOptions {
 		ContextPool: WrapContextPool,
 		ParentCtx:   context.Background(),
 		Sequence:    &atomic.Int64{},
-		Load:        &atomic.Int64{},
 		BindData:    nil,
 		Router:      GetRouter(),
 	}

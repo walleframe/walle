@@ -33,7 +33,7 @@ type ProcessOptions struct {
 	// dispatch packet struct filter
 	DispatchPacketFilter PacketDispatcherFilter
 	// load limit. return true to ignore packet.
-	LoadLimitFilter func(req interface{}, count AtomicNumber) bool
+	LoadLimitFilter func(req interface{}) bool
 }
 
 // log interface
@@ -118,7 +118,7 @@ func WithDispatchPacketFilter(v PacketDispatcherFilter) ProcessOption {
 }
 
 // load limit. return true to ignore packet.
-func WithLoadLimitFilter(v func(req interface{}, count AtomicNumber) bool) ProcessOption {
+func WithLoadLimitFilter(v func(req interface{}) bool) ProcessOption {
 	return func(cc *ProcessOptions) ProcessOption {
 		previous := cc.LoadLimitFilter
 		cc.LoadLimitFilter = v
@@ -177,9 +177,7 @@ func newDefaultProcessOptions() *ProcessOptions {
 		MsgCodec:             message.WalleCodec,
 		DispatchDataFilter:   DefaultDataFilter,
 		DispatchPacketFilter: DefaultPacketFilter,
-		LoadLimitFilter: func(req interface{}, count AtomicNumber) bool {
-			return false
-		},
+		LoadLimitFilter:      nil,
 	}
 	return cc
 }
