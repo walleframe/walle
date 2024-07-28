@@ -21,8 +21,8 @@ type EntryCodec interface {
 type EntryState int8
 
 const (
-	EntryStateOnline EntryState = iota
-	EntryStateOffline
+	EntryStateOffline EntryState = iota
+	EntryStateOnline
 )
 
 // An Entry represents a node.
