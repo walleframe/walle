@@ -37,6 +37,10 @@ var (
 	ErrPreviousNotSpecified = errors.New("Previous K/V pair should be provided for the Atomic operation")
 	// ErrKeyExists is thrown when the previous value exists in the case of an AtomicPut
 	ErrKeyExists = errors.New("Previous K/V pair exists, cannot complete Atomic operation")
+	// ErrLockFailed lock failed
+	ErrLockFailed = errors.New("lock failed")
+	// ErrLockCancel cancel try lock
+	ErrLockCancel = errors.New("lock cancel")
 )
 
 // // Config contains the options for a storage client
@@ -88,18 +92,15 @@ type Store interface {
 	// DeleteTree deletes a range of keys under a given directory
 	DeleteTree(ctx context.Context, directory string) error
 
-	// TODO: etcd实现
 	// NewLock creates a lock for a given key.
 	// The returned Locker is not held and must be acquired
 	// with `.Lock`. The Value is optional.
 	NewLock(ctx context.Context, key string, opts ...LockOption) (Locker, error) //
 
-	// TODO: etcd实现
 	// Atomic CAS operation on a single value.
 	// Pass previous = nil to create a new key.
 	AtomicPut(ctx context.Context, key string, value []byte, previous *KVPair, opts ...WriteOption) (bool, *KVPair, error)
 
-	// TODO: etcd实现
 	// Atomic delete of a single value
 	AtomicDelete(ctx context.Context, key string, previous *KVPair) (bool, error)
 
@@ -126,7 +127,6 @@ func walleStoreWrite() interface{} {
 }
 
 // LockOptions contains optional request parameters
-// TODO: Lock选项合理化配置以及生效
 //
 //go:generate gogen option -n LockOption -f Lock -o option.lock.go
 func walleStoreLock() interface{} {
@@ -134,9 +134,7 @@ func walleStoreLock() interface{} {
 		// Value  Optional, value to associate with the lock
 		"Value": []byte(nil),
 		// TTL Optional, expiration ttl associated with the lock
-		"TTL": time.Duration(0),
-		// RenewLock Optional, chan used to control and stop the session ttl renewal for the lock
-		"RenewLock": chan struct{}(nil),
+		"TTL": time.Duration(time.Second * 3),
 	}
 }
 
@@ -148,8 +146,9 @@ func walleStoreRead() interface{} {
 
 // Locker provides locking mechanism on top of the store.
 // Similar to `sync.Lock` except it may return errors.
-// TODO: 分布式锁实现
+// NOTE: use context.Context to control timeout or cancel
 type Locker interface {
-	Lock(stopChan chan struct{}) (<-chan struct{}, error)
+	TryLock(ctx context.Context) error
+	Lock(ctx context.Context) error
 	Unlock() error
 }

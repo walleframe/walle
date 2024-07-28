@@ -11,14 +11,11 @@ import (
 var _ = walleStoreLock()
 
 // LockOptions contains optional request parameters
-// TODO: Lock选项合理化配置以及生效
 type LockOptions struct {
 	// Value  Optional, value to associate with the lock
 	Value []byte
 	// TTL Optional, expiration ttl associated with the lock
 	TTL time.Duration
-	// RenewLock Optional, chan used to control and stop the session ttl renewal for the lock
-	RenewLock chan struct{}
 }
 
 // Value  Optional, value to associate with the lock
@@ -36,15 +33,6 @@ func WithLockOptionTTL(v time.Duration) LockOption {
 		previous := cc.TTL
 		cc.TTL = v
 		return WithLockOptionTTL(previous)
-	}
-}
-
-// RenewLock Optional, chan used to control and stop the session ttl renewal for the lock
-func WithLockOptionRenewLock(v chan struct{}) LockOption {
-	return func(cc *LockOptions) LockOption {
-		previous := cc.RenewLock
-		cc.RenewLock = v
-		return WithLockOptionRenewLock(previous)
 	}
 }
 
@@ -90,9 +78,8 @@ var watchDogLockOptions func(cc *LockOptions)
 // newDefaultLockOptions new option with default value
 func newDefaultLockOptions() *LockOptions {
 	cc := &LockOptions{
-		Value:     nil,
-		TTL:       0,
-		RenewLock: nil,
+		Value: nil,
+		TTL:   time.Second * 3,
 	}
 	return cc
 }
