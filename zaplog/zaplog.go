@@ -44,6 +44,22 @@ func (log *Logger) New(funcName string) *LogEntities {
 	}
 }
 
+func (log *Logger) Debug() bool {
+	return log.log.Level() >= zap.DebugLevel
+}
+
+func (log *Logger) Info() bool {
+	return log.log.Level() >= zap.InfoLevel
+}
+
+func (log *Logger) Error() bool {
+	return log.log.Level() >= zap.ErrorLevel
+}
+
+func (log *Logger) Warn() bool {
+	return log.log.Level() >= zap.WarnLevel
+}
+
 var NoopLogger *Logger = NewLogger(zap.NewNop())
 
 // logic 逻辑层默认日志接口

@@ -23,12 +23,27 @@ func (entity *LogEntities) ResetTime() *LogEntities {
 
 // ClearTime 清空时间，不再记录时间
 func (entity *LogEntities) ClearTime() *LogEntities {
-	entity.start = nil 
+	entity.start = nil
 	return entity
 }
 
 func (entity *LogEntities) Fields() []zap.Field {
 	return entity.fields
+}
+
+func (entify *LogEntities) EnableDebug() bool {
+	return entify.logger.Level().Enabled(zap.DebugLevel)
+}
+
+func (entify *LogEntities) EnableInfo() bool {
+	return entify.logger.Level().Enabled(zap.InfoLevel)
+}
+
+func (entify *LogEntities) EnableWarn() bool {
+	return entify.logger.Level().Enabled(zap.WarnLevel)
+}
+func (entify *LogEntities) EnableError() bool {
+	return entify.logger.Level().Enabled(zap.ErrorLevel)
 }
 
 // Debug 输出一条日志
@@ -156,4 +171,3 @@ func (entity *LogEntities) WhenErr() *LogFields {
 		entity: entity.err,
 	}
 }
-
