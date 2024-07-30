@@ -8,10 +8,10 @@
  3. 高层接口. 业务逻辑层.分为2层. 
     1. 生成代码层
     2. 自定义逻辑层
-[[./doc/img/network.png]]
+[[./img/network.png]]
 
 Process层:
-[[./doc/img/process.png]]
+[[./img/process.png]]
 
 ** Codec接口约定
 *所有Codec接口Marshal返回的内存，都应该是mempool.Pool()中申请的。*

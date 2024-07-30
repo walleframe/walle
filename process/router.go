@@ -19,6 +19,8 @@ type RouterFunc = MiddlewareFunc
 
 // Router 路由接口
 type Router interface {
+	// ResetMiddlewares 重置中间件
+	ResetMiddlewares()
 	// Use 设置中间件，在Use之后注册的接口都会使用此中间件
 	Use(m ...MiddlewareFunc)
 	// NoRouter 未注册路由的默认处理函数
@@ -51,6 +53,10 @@ type MixRouter struct {
 	handlersID  map[uint32]*routerNode
 	noCache     []MiddlewareFunc
 	startUse    bool
+}
+
+func (r *MixRouter) ResetMiddlewares() {
+	r.middlewares = make([]MiddlewareFunc, 0, 3)
 }
 
 // Use 设置全局中间件
