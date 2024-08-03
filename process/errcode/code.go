@@ -26,8 +26,6 @@ const (
 	ErrorCodeInvalidErrorPayload ErrorCode = 9
 	//
 	ErrorCodeRequestLimit ErrorCode = 10
-	//
-	ErrorCodeMigrating ErrorCode = 11
 )
 
 var (
@@ -51,6 +49,4 @@ var (
 	ErrInvalidErrPayload = NewError(ErrorCodeInvalidErrorPayload, "error payload invalid")
 	//ErrRequestLoadLimit request load limit
 	ErrRequestLoadLimit = NewError(ErrorCodeRequestLimit, "request load limit")
-	// ErrMigrating migrating, use new node retry. use for virtrual bucket mode.
-	ErrMigrating = NewError(ErrorCodeMigrating, "migrating")
 )
