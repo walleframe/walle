@@ -28,10 +28,6 @@ var (
 	service string
 )
 
-const (
-	defaultModule = "custom"
-)
-
 // SetupAlert 安装告警后端支持
 func SetupAlert(svc string, alert AlertSupport) {
 	backend = alert
@@ -51,49 +47,49 @@ func Alert(lv AlertLevel, id int64, module, title, msg string, ext ...string) {
 }
 
 // Warning 警告信息 不是错误信息
-func Warning(title, msg string) {
+func Warning(module, title, msg string) {
 	if backend == nil {
 		zaplog.GetFrameLogger().New("alert.Warning").Debug("alert not setup",
-			zap.String("service", service),
+			zap.String("service", service), zap.String("module", module),
 			zap.String("title", title), zap.String("msg", msg),
 		)
 		return
 	}
-	backend.Alert(AlertLevelWarning, 0, service, defaultModule, title, msg)
+	backend.Alert(AlertLevelWarning, 0, service, module, title, msg)
 }
 
 // Error 错误告警 需要处理，但不是很紧急
-func Error(title, msg string) {
+func Error(module, title, msg string) {
 	if backend == nil {
 		zaplog.GetFrameLogger().New("alert.Error").Debug("alert not setup",
-			zap.String("service", service),
+			zap.String("service", service), zap.String("module", module),
 			zap.String("title", title), zap.String("msg", msg),
 		)
 		return
 	}
-	backend.Alert(AlertLevelError, 0, service, defaultModule, title, msg)
+	backend.Alert(AlertLevelError, 0, service, module, title, msg)
 }
 
 // Critical 关键信息告警
-func Critical(title, msg string) {
+func Critical(module, title, msg string) {
 	if backend == nil {
 		zaplog.GetFrameLogger().New("alert.Critical").Debug("alert not setup",
-			zap.String("service", service),
+			zap.String("service", service), zap.String("module", module),
 			zap.String("title", title), zap.String("msg", msg),
 		)
 		return
 	}
-	backend.Alert(AlertLevelCritical, 0, service, defaultModule, title, msg)
+	backend.Alert(AlertLevelCritical, 0, service, module, title, msg)
 }
 
 // Emergency 紧急告警 必须马上处理
-func Emergency(title, msg string) {
+func Emergency(module, title, msg string) {
 	if backend == nil {
 		zaplog.GetFrameLogger().New("alert.Emergency").Debug("alert not setup",
-			zap.String("service", service),
+			zap.String("service", service), zap.String("module", module),
 			zap.String("title", title), zap.String("msg", msg),
 		)
 		return
 	}
-	backend.Alert(AlertLevelEmergency, 0, service, defaultModule, title, msg)
+	backend.Alert(AlertLevelEmergency, 0, service, module, title, msg)
 }
